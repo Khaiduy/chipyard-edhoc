@@ -1,0 +1,68 @@
+/*
+   Copyright (c) 2021 Fraunhofer AISEC. See the COPYRIGHT
+   file at the top-level directory of this distribution.
+
+   Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+   http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+   <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+   option. This file may not be copied, modified, or distributed
+   except according to those terms.
+*/
+
+#ifndef ERROR_H
+#define ERROR_H
+#include "common/print_util.h"
+
+/* All possible errors that EDHOC and OSCORE can have */
+enum err {
+	/*common errors*/
+	ok = 0,
+	buffer_to_small = 1,
+	hkdf_failed = 2,
+	unexpected_result_from_ext_lib = 3,
+	wrong_parameter = 4,
+	crypto_operation_not_implemented = 5,
+	/*indicates that transport layer is not initialized*/
+	transport_deinitialized = 7,
+	vla_insufficient_size = 9,
+
+	/*EDHOC specific errors*/
+	error_message_received = 101,
+	sign_failed = 103,
+	unsupported_cipher_suite = 106,
+	unsupported_ecdh_curve = 107,
+	signature_authentication_failed = 112,
+	mac_authentication_failed = 113,
+	credential_not_found = 116,
+	no_such_ca = 117,
+	cbor_encoding_error = 119,
+	cbor_decoding_error = 120,
+	suites_i_list_to_long = 121,
+	xor_error = 122,
+	suites_i_list_empty = 123,
+	ead_critical_unsupported = 124,
+};
+
+/*This macro checks if a function returns an error and if so it propagates 
+	the error to the caller function*/
+#define TRY(x)                                                                 \
+	do {                                                                   \
+		enum err retval = (x);                                         \
+		if (ok != retval) {                                            \
+			handle_runtime_error(retval, __FILE__, __LINE__);      \
+			return retval;                                         \
+		}                                                              \
+	} while (0)
+
+/* This macro checks if a function belonging to an external library returns an expected result or an error. If an error is returned the macro returns unexpected_result_from_ext_lib. */
+#define TRY_EXPECT(x, expected_result)                                         \
+	do {                                                                   \
+		int retval = (x);                                              \
+		if (retval != expected_result) {                               \
+			handle_external_runtime_error(retval, __FILE__,        \
+						      __LINE__);               \
+			return unexpected_result_from_ext_lib;                 \
+		}                                                              \
+	} while (0)
+
+#endif

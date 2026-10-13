@@ -14,7 +14,7 @@ sim_name := none
 #########################################################################################
 # include shared variables
 #########################################################################################
-SUB_PROJECT ?= vcu118
+SUB_PROJECT ?= arty100t
 
 ifeq ($(SUB_PROJECT),vc707)
 	SBT_PROJECT       ?= fpga_platforms
@@ -89,10 +89,10 @@ endif
 ifeq ($(SUB_PROJECT),arty100t)
 	# TODO: Fix with Arty
 	SBT_PROJECT       ?= fpga_platforms
-	MODEL             ?= Arty100THarness
-	VLOG_MODEL        ?= Arty100THarness
+	MODEL             ?= Arty100TWithoutDDRHarness
+	VLOG_MODEL        ?= Arty100TWithoutDDRHarness
 	MODEL_PACKAGE     ?= chipyard.fpga.arty100t
-	CONFIG            ?= RocketArty100TConfig
+	CONFIG            ?= SmallRocket32Arty100TConfig
 	CONFIG_PACKAGE    ?= chipyard.fpga.arty100t
 	GENERATOR_PACKAGE ?= chipyard
 	TB                ?= none # unused

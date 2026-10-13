@@ -1,0 +1,105 @@
+Trạng thái: OK | TESTING (đã chạy, chỉ cần thêm thời gian test) | NOT POSSIBLE
+
+1. Chipyard 1.11.0: OK.
+2. Artix-7 100T (Arty A7-100T): OK.
+3. Rocket 64-bit, 8 KiB I$/D$, 32 KiB RAM, GPIO/UART/JTAG/SPI, 100 MHz
+(a) Core, cache, ngoại vi: OK.
+(b) Bộ nhớ 32 KiB -> 64 KiB. OK.
+32 KiB là không đủ: bản build nhỏ nhất trong số 36 bản là 34,141 B, đã vượt quá 32 KiB ngay cả khi chưa dùng stack. Yêu cầu ghi là "tối thiểu", nên 64 KiB vẫn hợp lệ. Đã thay đổi.
+(c) Tần số 100 MHz -> 75 MHz. NOT POSSIBLE.
+Rocket core fmax trên Arty A7-100T là 75 MHz, thấp hơn mức tối thiểu theo yêu cầu. Phương án thay thế: giữ 75 MHz (đã xong), hoặc dùng FPGA nhanh hơn / đổi core nếu 100 MHz là bắt buộc.
+4. Thư viện EDHOC: RFC 9528 methods 0-3 + cipher suites, và EDHOC với ML-KEM: OK.
+(a) Methods 0-3 x suites 0,1,2,3,4,5,6,24,25 = 36/36 pass trên FPGA.
+(b) Phiên bản ML-KEM (AuthKEM) cũng pass. Tổng cộng 37/37.
+Tất cả bản build đều vừa 64 KiB. Bản lớn nhất: 50,817 B.
+
+5A. Luồng xử lý RFC 9528: handshake, mã hóa file, gửi sang board khác, 1 KB - 100 MB, báo cáo cycle và thời gian từng bước
+(a) Handshake và truyền dữ liệu mã hóa: OK.
+(b) Kích thước file không cố định: OK.
+(c) Dữ liệu được truyền dạng stream; dung lượng RAM sử dụng là cố định cho mọi kích thước. Phần này không phải vấn đề, vấn đề nằm ở bộ nhớ lưu trữ. Dữ liệu lớn phải được lưu ở đâu đó trước và sau khi truyền; câu hỏi là ở đâu. Có thể thêm một phần vùng khác trên thẻ SD để đọc/ghi dữ liệu, nhưng tốc độ sẽ chậm và cần thời gian để test.
+(d) Đo thời gian từng bước (per-step timing): hiện chưa có.
+Hiện tại chỉ báo cáo tổng / link / compute. Bản build có TIMING=1 tuy compile được nhưng chỉ còn trống 64 B RAM; chưa từng chạy thử. TESTING.
+
+5B. PQ-EDHOC với pqsuites suites TBD2 / TBD3, mode PSK: NOT POSSIBLE theo như mô tả.
+(a) Đã kiểm tra draft-ietf-lake-pqsuites-00:
+- Không chỉ đơn thuần là gán thêm số suite mới, Section 3 thay thế bước Diffie-Hellman bằng bước KEM. Luồng tin nhắn (message flow) giữ nguyên; G_Y trở thành KEM ciphertext.
+- Methods 1, 2, 3 KHÔNG được hỗ trợ. Các method này cần static Diffie-Hellman, mà hiện chưa có thuật toán PQ nào làm được việc đó. Vì vậy với pqsuites, chỉ có method 0 (cả 2 bên đều sign) là khả thi.
+- TBD1/TBD2/TBD3 và TBD10/TBD12 vẫn chưa được gán chính thức. Chưa thể tương thích cho đến khi IANA cấp số chính thức.
+(b) Lưu ý về PSK: PSK là một draft riêng (draft-ietf-lake-edhoc-psk), chưa được triển khai ở đây.
+(c) Phương án thay thế (đã hoàn thành): AuthKEM draft, suite 7 = ML-KEM-512 + AES-CCM-128 + SHA-256. Xác thực bằng KEM, không dùng chữ ký. Bản này giải quyết đúng trường hợp mà pqsuites nêu là chưa có thuật toán chuẩn. Vừa 64 KiB, pass trên FPGA.
+
+6. Thư mục test Crypto (EDHOC, ML-KEM 512/768/1024, AES, ...): TESTING
+(a) Đã bao gồm: SHA-256, SHA-384, HMAC, HKDF, AES-CCM, AES-GCM, ML-KEM 512 / 768 / 1024.
+(b) Chưa bao gồm: EDHOC test vectors (RFC 9529). TESTING.
+7. Test ngoại vi: GPIO, UART, JTAG, SPI
+TESTING. Đã có đủ cả 4 chương trình; mới chỉ có GPIO là đã chạy thử trên board.
+Không cần viết thêm code, chỉ cần thời gian test.
+
+
+/*Date: 11/9/2026 - Hùng*/
+
+4. Các phiên bản nào cần Bộ nhớ trên 32KiB thế? Có cách nào triển khai gọn trong 32KiB không? Nạp từng phiên bản ....? Vì sẽ có làm layout thử trên ROHM 5x5
+5A. Mình sẽ cấu hình 1 phân vùng để đọc dữ liệu từ SD-card đi. Cơ chế hoạt động như dạng end-user, copy file vào thẻ SD, dữ liệu tự động được xử lý truyền theo stream vào SoC để mã hóa/giải mã.
+   Tốc độ chậm không sao cả? Mình cứ đo được thời gian cho truyền dữ liệu là được. Hiệu năng quan tâm là việc tạo và xử lý các mess. cho bắt tay và việc mã hóa, giải mã. Còn hiệu năng về truyền dữ liệu chưa phải là vấn đề chính, có report là được.
+5B. Anh muốn tìm hiểu xem có 1 option nào đó dạng highest security không? Là sự kết hợp của AES256 và ML-KEM1024
+    Về cơ bản là cái edhoc này muốn xài PQC phải có PSK đúng không? Vậy với chế độ PSK có mode nào xài đến AES256, ML-KEM1024 không? 
+8. Lưu ý các phần em làm này nên song song làm thành work guide nhé. Như Shark Bình làm, để anh làm báo cáo => Chi phí. Làm chi tiêt step-by-step nha. Lưu ý với số lượng này phải hơn 200 trang đấy nhé 
+
+/*Date: 7/10/2026 - Kết quả*/
+
+3(b) Bộ nhớ: OK. Image 24,297 - 46,643 B; tất cả (cả stack) vừa 64 KiB. Chỉ method 3 suite 0/1/4 vừa 32 KiB.
+4. FPGA (2 board, radio): methods 0-3 x 9 suites 36/36 PASS; AuthKEM TBD1/2/3 3/3 PASS. Tổng 39/39. OK.
+   Handshake: suite 0/1/4 0.8-1.1 s; 2/3/5 2.7-3.7 s; 6 0.8-3.0 s; 24 7.0-9.4 s; 25 2.2-3.3 s; TBD1 0.54 s; TBD2 0.57 s; TBD3 1.36 s.
+5A. Truyền file từ thẻ SD: chỉ có ở gói wolfssl; AuthKEM chỉ có stream (APP_FILE_BYTES).
+5B. Highest security: TBD3 = AES-256-GCM + ML-KEM-1024 + SHA-384, PASS trên FPGA, không cần PSK. OK.
+6. crypto_test, mlkem_test PASS. RFC 9529 test vectors PASS (host + FPGA). OK.
+7. GPIO, JTAG, UART PASS. SPI: thanh ghi PASS, thẻ SD FAIL (CMD0), cần kiểm tra thẻ / dây PMOD JA. TESTING.
+RFC 9528 / authkem-01: đã sửa 12 điểm chưa đúng chuẩn. Còn 1: RNG profile demo seed từ cycle counter (§9.2), cần quyết định.
+Lưu ý: firmware từ 7/10 không tương thích bản cũ, nạp cùng phiên bản cho 2 board.
+
+/*Date: 8/10/2026 - Kết quả*/
+
+5A. Truyền file thẻ SD -> thẻ SD qua kênh mã hoá sau EDHOC: OK. Thẻ SD có phân vùng FAT32 (copy file vào bằng PC, hoặc chuẩn bị qua JTAG). Board A gửi SEND.BIN, board B ghi RECV.BIN.
+   1 MiB, AuthKEM TBD3, trên FPGA: 142 s, 7.4 KB/s (SD chiếm ~4%), CRC khớp, đọc lại RECV.BIN: 0 byte sai. 100 MB ước tính ~4 giờ.
+7. SPI / thẻ SD: PASS cả 2 board (lỗi trước là do code, đã sửa).
+Radio: truyền dài bị lỗi do nhiễu SPI tới module radio; đã thêm CRC + tự khởi động lại radio. 1 MiB: 3/3 PASS.
+Kiểm tra lại: 78 build, 42 host test, 39/39 cặp board PASS.
+
+/*Date: 8/10/2026 (chiều) - Tốc độ truyền*/
+
+5A. 1 MiB thẻ SD -> thẻ SD (TBD3): 142 s -> 104 s, 7.4 -> 10.1 KB/s (+37%). 100 MB ước tính ~2.9 giờ. Đọc lại RECV.BIN: 0 byte sai.
+   Đã tăng tốc: AES nhanh 6x, GHASH nhanh 6x (bỏ phép nhân), SPI radio dạng burst, bỏ CSMA, gói đầy hơn.
+   Giới hạn còn lại là chip radio (250 kbit/s, ~6.8 ms mỗi gói). Turbo 625 kbit/s không ổn định trên module này. Muốn nhanh hơn nhiều cần nối dây giữa 2 board.
+Kiểm tra lại: 78 build, 42 host test, 39/39 cặp board PASS.
+
+/*Date: 12/10/2026 - Kết quả 5A(d)*/
+
+5A(d). Đo thời gian từng bước: OK. TIMING=1 in thời gian tạo / xử lý từng message (cả 2 board), mã hoá / giải mã luôn được in. 39/39 cặp PASS trên FPGA với TIMING=1.
+   Ví dụ (initiator, ms): suite 2 m3: m1 0.5, xử lý m2 1353, tạo m3 10. TBD3: m1 15, m2 83, m3 96, m4 127, m5 35 (tổng compute 391).
+   AES-256-GCM trên FPGA: mã hoá 162 KB/s, giải mã 153 KB/s. 1 MiB SD -> SD: 99 s (radio ~87 s, mã hoá 6.5 s, đọc SD 5.7 s).
+   Bảng đầy đủ: common/board/perf_table.py trên log của board.
+
+/*Date: 12/10/2026 - Kết quả mục 8 (tài liệu hướng dẫn)*/
+
+8. Slide hướng dẫn step-by-step: 5 bài, 187 slide (pptx + pdf), docs/slides/. Số liệu và output đều lấy từ board thật.
+   Còn thiếu: ảnh board (ô PHOTO), tên khoá học / tác giả / ngày, link GitHub. Chưa đủ 200 trang.
+
+/*Date: 12/10/2026 - Hiển thị kết quả trên terminal (tuỳ chọn)*/
+
+- run_pair.sh: thêm prk=match|DIFFER|- (so PRK_out hai board); VERBOSE=1 hiện console hai board trực tiếp (I| / R|); build DEBUG=1 để thấy giá trị trung gian.
+- Lỗi radio tìm thấy khi chạy DEBUG=1: hai board cùng gửi lại thì treo vĩnh viễn; board kết thúc trước làm board kia treo ở frame cuối. Đã sửa (edhoc_rf_link.c, transport_idle).
+- Kiểm tra lại: 78 build, 42 host test, 39/39 cặp board PASS, 1 MiB SD-SD 98.9 s (10.6 KB/s), CRC đúng.
+- Chạy lại 1 MiB 3 lần: ~99 s (10.5 KB/s), radio OK cả 3; lần 2 thẻ B lỗi ghi sector đầu (file không được lưu, báo FAIL đúng) -> điểm mở. Slide bài 3/4/5 đã cập nhật số liệu mới.
+- Slide: viết lại dạng hướng dẫn (bỏ số lần PASS, bảng trạng thái, điểm mở); bài 5 phần 6 = các câu hỏi của dự án + giới hạn cần biết + cách tự chạy lại. 187 slide.
+
+/*Date: 13/10/2026 - Slide: thêm chi tiết kỹ thuật*/
+- Bài 3: phần mới "Inside the Messages" (CBOR, message_1/2/3 từng byte theo RFC 9529, EDHOC_KDF/info, MAC_2 vs chữ ký, tự kiểm TH_2 từ log DEBUG=1). Bài 4: bên trong ML-KEM, key schedule AuthKEM từng message, so sánh RFC 9528, byte trên dây TBD3. Bài 5: khung radio từng byte, chia/ghép fragment, FAT32 cluster->sector, chuỗi cluster (file phân mảnh), 1 sector qua SPI, file->record->frame. 205 slide.
+
+/*Date: 13/10/2026 - Slide: lộ trình học hoàn chỉnh (theo góp ý review)*/
+- Bài 1: thêm phần "Start Here" (thiết bị, phần mềm + phiên bản đã thử, 2 lộ trình A/B, kiểm tra sẵn sàng, cách đọc slide, thuật ngữ), slide đi dây PMOD, quy trình chấp nhận bitstream; 75 MHz ghi là kết quả của bản build này, không phải giới hạn chung.
+- Bài 2: phần "Your Own Boards" (tìm 4 serial, sửa boards.env, kiểm tra), lab đầu tiên đủ bước, "Will my build fit?" (size + map), sửa câu linker (chỉ kiểm tra reserve cấu hình), SKIP ≠ PASS.
+- Bài 3: chạy 1 handshake trước rồi mới lý thuyết; bảng "mỗi kết quả chứng minh gì" (echo ≠ so sánh PRK_out); phạm vi RFC 9529 = 2 trace; cách đo thời gian; lệnh TH_2 chạy được từ log.
+- Bài 4: KEM cho gì / không cho gì, không cần PSK nhưng vẫn cần credential tin cậy + khoá riêng; ML-KEM tách 4 slide (+768); TBD3 = "strongest configured option"; quyết định draft gắn với hàm nguồn.
+- Bài 5: mỗi sự cố = triệu chứng/quan sát/nguyên nhân/sửa/kiểm tra/khôi phục; kiểm tra ở mọi bước + ví dụ lỗi ghi SD thật (A báo SENT, B "not stored"); commit FAT32 không an toàn khi mất điện; quy trình file lớn, đơn vị MiB/KB/s, 100 MiB là ước tính.
+- Mọi bài: ghi chú đáp án bài tập, nhãn "Run this / Example output / Simplified", số trang footer đúng. 236 slide.
+- Code: common/board/list_boards.sh (mới); run_one.sh tìm console theo serial trong boards.env; firmware in "RF: frames= repeats= crc_err= reinits=" khi kết thúc (radio). Kiểm tra: s2_m3 PASS, akTBD3 PASS prk=match, loopback PASS.

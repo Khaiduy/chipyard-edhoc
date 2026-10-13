@@ -1,0 +1,18 @@
+# Build options of the EDHOC library.
+
+OPT = -Os
+
+# Print helpful debug messages
+ifeq ($(DEBUG),1)
+DEBUG_PRINT += -DDEBUG_PRINT
+endif
+
+# Buffer sizes (bytes)
+FEATURES += -DEAD_SIZE=0
+FEATURES += -DC_I_SIZE=1
+FEATURES += -DC_R_SIZE=1
+FEATURES += -DID_CRED_R_SIZE=16
+FEATURES += -DID_CRED_I_SIZE=16
+FEATURES += -DCRED_R_SIZE=64
+FEATURES += -DCRED_I_SIZE=64
+FEATURES += -DSUITES_I_SIZE=1

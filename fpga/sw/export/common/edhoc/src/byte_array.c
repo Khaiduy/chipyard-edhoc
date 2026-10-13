@@ -1,0 +1,37 @@
+/*
+   Copyright (c) 2021 Fraunhofer AISEC. See the COPYRIGHT
+   file at the top-level directory of this distribution.
+
+   Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+   http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+   <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+   option. This file may not be copied, modified, or distributed
+   except according to those terms.
+*/
+
+#include "common/byte_array.h"
+#include "common/memcpy_s.h"
+#include "common/oscore_edhoc_error.h"
+
+uint8_t EMPTY_STRING[] = { "" };
+struct byte_array EMPTY_ARRAY = {
+	.len = 0,
+	.ptr = EMPTY_STRING,
+};
+
+struct byte_array NULL_ARRAY = {
+	.len = 0,
+	.ptr = NULL,
+};
+
+enum err byte_array_append(struct byte_array *dest,
+			   const struct byte_array *source, uint32_t capacity)
+{
+	if (source->len + dest->len > capacity) {
+		return buffer_to_small;
+	}
+	TRY(_memcpy_s(dest->ptr + dest->len, capacity - dest->len, source->ptr,
+		      source->len));
+	dest->len += source->len;
+	return ok;
+}

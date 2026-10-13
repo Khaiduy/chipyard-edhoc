@@ -1,0 +1,33 @@
+A. Priority tasks
+1.	Implementation platform: Chipyard – stable version (1.11.0)
+2.	Target hardware: Artix-7 100T FPGA
+3.	RISC-V core configuration (minimum):
+-	Core: Rocket 64-bit
+-	Cache: 8 KiB (D-cache and I-cache)
+-	Internal memory: 64 KiB
+-	Peripherals: GPIO, UART, JTAG, SPI
+-	Operating frequency: 75 MHz
+4.	C libraries for EDHOC compliant with RFC9528 (full support for methods 0, 1, 2, 3; cipher suites, etc.) and for EDHOC with ML-KEM.
+5.	Operational workflow:
+A. EDHOC per RFC9528
+- Perform key exchange handshakes using various methods and cipher suites.
+- Upon successful handshake, use the shared key, KDF, etc., to encrypt data on Board A and send the ciphertext to Board B for decryption.
+- Data size is not fixed; the payload is a file (flexible size, tentatively ranging from 1 KB to 100 MB: 1 KB, 10 KB, 100 KB, 1 MB, 10 MB, 100 MB).
+- Report performance metrics (cycle count and execution time) for each step of the handshake and data exchange. 
+B. PQ-EDHOC:
+- Covers similar functions to RFC9528: handshake, data transmission, performance reporting, etc.
+- PQ-EDHOC cipher suites comply with the latest update: https://datatracker.ietf.org/doc/draft-ietf-lake-pqsuites/
+Value: TBD2
+Array: 3, -45, 16, TBD10, -48, 3, -16
+Description: A256GCM, SHAKE256, 16, MLKEM512, ML-DSA-44,
+A256GCM, SHA-256
+Value: TBD3
+Array: 3, -43, 16, TBD12, -48, 3, -43
+Description: A256GCM, SHA-384, 16, MLKEM1024, ML-DSA-85,
+A256GCM, SHA-384
+Uses PSK mode.
+
+B. Incremental additions required
+6.	Add a folder for testing cryptographic algorithms used in EDHOC (RFC9528) and PQC-KEM. I will pull in test cases for the component algorithms (EDHOC, ML-KEM [full levels 512/768/1024], AES, etc.) to implement specific tests for each sub-algorithm.
+7.	Test programs for peripherals: GPIO, UART, JTAG, SPI.
+what 

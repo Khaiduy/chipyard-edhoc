@@ -1,0 +1,1 @@
+Monocypher 4.0.2 (BSD-2-Clause or CC0, see LICENCE.md): monocypher.c plus the optional RFC 8032 Ed25519 (monocypher-ed25519.c, SHA-512).

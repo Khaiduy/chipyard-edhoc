@@ -1,0 +1,75 @@
+diff --git a/xilinx/common/tcl/opt.tcl b/xilinx/common/tcl/opt.tcl
+index 81bf4ad..15f2342 100644
+--- a/xilinx/common/tcl/opt.tcl
++++ b/xilinx/common/tcl/opt.tcl
+@@ -1,7 +1,9 @@
+ # See LICENSE for license details.
+ 
+ # Optimize the netlist
+-opt_design -directive Explore
++# ExploreWithRemap: LUT remapping recovers timing on the deep Rocket ID-stage
++# combinational cone (fetch queue -> RVC expand -> decode -> hazard -> EX).
++opt_design -directive ExploreWithRemap
+ 
+ # Checkpoint the current design
+ write_checkpoint -force [file join $wrkdir post_opt]
+diff --git a/xilinx/common/tcl/place.tcl b/xilinx/common/tcl/place.tcl
+index ccc862a..5b8147b 100644
+--- a/xilinx/common/tcl/place.tcl
++++ b/xilinx/common/tcl/place.tcl
+@@ -1,13 +1,16 @@
+ # See LICENSE for license details.
+ 
+ # Place the current design
+-place_design -directive Explore
++place_design -directive ExtraTimingOpt
+ 
+-# Optimize the current placed netlist
+-phys_opt_design -directive Explore
++# Optimize the current placed netlist.
++# AlternateFlowWithRetiming applies register retiming, which is what actually
++# moves this design's critical path; plain Explore leaves ~1 ns on the table.
++phys_opt_design -directive AlternateFlowWithRetiming
+ 
+-# Optimize dynamic power using intelligent clock gating
+-power_opt_design
++# NOTE: power_opt_design (intelligent clock gating) is not run. It was absent
++# from the flow that closed 75 MHz, so it is left out to match that result.
++# Its effect on timing here was never isolated -- not measured as harmful.
+ 
+ # Checkpoint the current design
+ write_checkpoint -force [file join $wrkdir post_place]
+diff --git a/xilinx/common/tcl/route.tcl b/xilinx/common/tcl/route.tcl
+index 68fc84a..c491f2c 100644
+--- a/xilinx/common/tcl/route.tcl
++++ b/xilinx/common/tcl/route.tcl
+@@ -1,10 +1,24 @@
+ # See LICENSE for license details.
+ 
+ # Route the current design
+-route_design -directive Explore
++route_design -directive AggressiveExplore
+ 
+-# Optimize the current design post routing
+-phys_opt_design -directive Explore
+-
+-# Checkpoint the current design
++# Checkpoint immediately after routing, before any post-route optimization.
++# phys_opt_design segfaults intermittently in Vivado 2024.2 on this design
++# (observed with both AggressiveExplore and AlternateFlowWithRetiming); this
++# checkpoint is what makes such a crash recoverable instead of losing the run.
+ write_checkpoint -force [file join $wrkdir post_route]
++
++# Post-route physical optimization is where most of the timing recovery happens
++# (measured at 75 MHz: WNS -0.875 -> 0.000). Use the Explore directive: it is
++# the only one observed to survive repeated passes on this design, whereas
++# AggressiveExplore and AlternateFlowWithRetiming both crashed the tool.
++# Stop as soon as timing is met or a pass stops improving.
++for {set i 0} {$i < 3} {incr i} {
++  set wns_before [get_property SLACK [get_timing_paths -delay_type max -max_paths 1 -nworst 1]]
++  if {$wns_before >= 0} { break }
++  phys_opt_design -directive Explore
++  set wns_after [get_property SLACK [get_timing_paths -delay_type max -max_paths 1 -nworst 1]]
++  write_checkpoint -force [file join $wrkdir post_route]
++  if {$wns_after <= $wns_before} { break }
++}

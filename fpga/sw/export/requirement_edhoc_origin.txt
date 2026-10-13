@@ -1,0 +1,33 @@
+A.	Cần ưu tiên làm trước
+1.	Nền tảng triển khai: Chipyard – bản stable (1.11.0)
+2.	Phần cứng thực thi: FPGA artix7-100T
+3.	Cấu hình core RISC-V (thấp nhất):
+-	Core: Rocket 64-bits
+-	Cache: 8KiB cho D và I
+-	Bộ nhớ trong: 32 KiB
+-	Peripheral: gpio, uart, jtag, spi
+-	Operartion freq.:  100Mhz  
+4.	Thư viện C cho edhoc theo RFC9528 full (method0,1,2,3, cipher suites ….) và cho edhoc với mlkem.
+5.	Cách thức hoạt động:
+A. EDHOC theo RFC9528
+- Thực hiện bắt tay trao đổi khóa theo từng methods, cipher suite, 
+- Bắt tay thành công thì dùng shared key + KDF +… để mã hóa dữ board A, gửi ciphertext sang board B giải mã
+- Dữ liệu không bị fixed ở kích thước mà nó là một file (dung lượng linh hoạt, dự kiến ở dải 1KB, 10KB, 100 KB, 1 MB, 10 MB, 100 MB?)
+- Có report hiệu năng (cycle time + execution time) theo từng bước handshake và trao đổi dữ liệu.
+B. PQ-EDHOC: 
+- Tương tự các nội dung như theo RFC9528: bắt tay, truyền dữ liệu, report hiệu năng,.., 
+- Các Cipher suite cua PQ-EDHOC tuân theo update mới nhất https://datatracker.ietf.org/doc/draft-ietf-lake-pqsuites/
+Value: TBD2
+   Array: 3, -45, 16, TBD10, -48, 3, -16
+   Description: A256GCM, SHAKE256, 16, MLKEM512, ML-DSA-44,
+                A256GCM, SHA-256
+Value: TBD3
+   Array: 3, -43, 16, TBD12, -48, 3, -43
+   Description: A256GCM, SHA-384, 16, MLKEM1024, ML-DSA-85,
+                A256GCM, SHA-384
+Sử dụng chế độ PSK
+
+B. Cần có nhưng bổ sung từ từ
+6.	Bổ sung folder cho test các thuật toán mật mã dùng cho edhoc rfc9528 và PQC-KEM. Cái này em kéo test case của các thuật toán thành phần (EDHOC,ML-KEM full cấp độ 512/768/1024, AES,,…) để cho thêm phần test chạy kiểm thử cho từng thuật toán con.
+7.	 Các chương trình test cho ngoại vi gpio, uart, jtag, spi
+

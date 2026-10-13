@@ -1,0 +1,1 @@
+curve25519-donna (Adam Langley): only curve25519-donna-c64.c, the 64-bit (radix 2^51, unsigned __int128) X25519. Licence: BSD-3-Clause (LICENSE.md); the source header releases it into the public domain.
