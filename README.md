@@ -13,7 +13,7 @@ section "Start Here". This repository is private; ask the author for access.
 ## What you need
 
 * 2 × Arty A7-100T, 2 × micro-USB cable, 2 × FTDI C232HM-DDHSL-0 (JTAG on PMOD JD),
-  2 × PmodSD + microSD card (PMOD JA), 2 × MRF24J40MA radio on a PMOD adapter (PMOD JC).
+  2 × PmodMicroSD + microSD card (PMOD JA), 2 × MRF24J40MA radio on a PMOD adapter (PMOD JC).
 * Ubuntu 24.04, Vivado 2024.2, `riscv64-unknown-elf-gcc` 15.1 (rv64imac/lp64),
   OpenOCD 0.12, Python 3.
 
