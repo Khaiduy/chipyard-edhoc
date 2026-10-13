@@ -22,7 +22,6 @@ section "Start Here". This repository is private; ask the author for access.
 ```bash
 git clone git@github.com:Khaiduy/chipyard-edhoc.git chipyard
 cd chipyard
-git checkout edhoc-course-v1      # the revision the slides describe
 ```
 
 **Route A — build the hardware** (Chipyard toolchain, Vivado):

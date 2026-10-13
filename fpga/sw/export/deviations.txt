@@ -123,3 +123,9 @@ Kiểm tra lại: 78 build, 42 host test, 39/39 cặp board PASS.
 - Kiểm tra trên board A: rút/cắm thẻ + RESET 3 lần, RESET 2 lần: 5/5 boot "GPIO TEST: PASS", không ERROR. jtag_test, gpio_test PASS trên cả 2 board.
 - sd_prep -DSD_PREP_BOOT: ghi build/boot.bin vào LBA 2048 từ board (không cần đầu đọc thẻ); thử: 1606 B, boot OK.
 - Slide: bỏ kiểu báo cáo (không giải thích 75 vs 100 MHz, không phân tích 32 KiB, không "known issue"); 100 MHz thành bài tập; bảng chân module radio -> JC (PCB riêng). 239 slide.
+
+/*Date: 13/10/2026 - Rà soát slide cuối*/
+- Sửa đường dẫn checkpoint / báo cáo timing, thêm lệnh nạp sd_prep cho SD boot không dùng đầu đọc; bỏ chi tiết PCB trong danh sách thiết bị.
+- Làm rõ số byte section khác vùng RAM có padding; bổ sung lý do 64 KiB và kiểm tra cả hai vai trò.
+- 239 slide: số trang và nội dung chữ PPTX/PDF khớp; 26 khối lệnh shell qua bash -n; kiểm tra hình các slide đã sửa. Không chạy lại FPGA trong lần rà soát này.
+- Repo chỉ còn 1 nhánh main (bản mới nhất), bỏ tag edhoc-course-v1; README và slide bỏ lệnh git checkout tag.
