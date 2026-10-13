@@ -14,8 +14,8 @@ section "Start Here". This repository is private; ask the author for access.
 
 * 2 × Arty A7-100T, 2 × micro-USB cable, 2 × FTDI C232HM-DDHSL-0 (JTAG on PMOD JD),
   2 × PmodMicroSD + microSD card (PMOD JA), 2 × MRF24J40MA radio on a PMOD adapter (PMOD JC).
-* Ubuntu 24.04, Vivado 2024.2, `riscv64-unknown-elf-gcc` 15.1 (rv64imac/lp64),
-  OpenOCD 0.12, Python 3.12 with a venv for the host tools:
+* Ubuntu 24.04 (everything else is installed under Setup), plus a Python venv for
+  the host tools (after step 2 of Setup):
 
   ```bash
   python3 -m venv ~/edhoc-venv && . ~/edhoc-venv/bin/activate
@@ -24,27 +24,67 @@ section "Start Here". This repository is private; ask the author for access.
 
 ## Setup
 
+No conda and no Chipyard `build-setup.sh`: only the tools below are installed.
+
+**1. Vivado 2024.2** (both routes). Run the AMD Unified Installer
+(`FPGAs_AdaptiveSoCs_Unified_2024.2_1113_1001_Lin64.bin`, free AMD account), choose
+Vivado → Vivado ML Standard → 7 Series devices only, install to `$HOME/Xilinx`, then
+install the USB cable drivers and unplug/replug the boards:
+
 ```bash
-git clone git@github.com:Khaiduy/chipyard-edhoc.git chipyard   # into a path without spaces
+cd $HOME/Xilinx/Vivado/2024.2/data/xicom/cable_drivers/lin64/install_script/install_drivers
+sudo ./install_drivers
+```
+
+**2. Packages and RISC-V GCC 15.1** (both routes, ~15 min on 20 cores, 2.4 GB):
+
+```bash
+sudo apt install git make wget jq python3 python3-venv openocd dosfstools \
+  autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev gawk \
+  build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev
+git clone https://github.com/riscv-collab/riscv-gnu-toolchain
+cd riscv-gnu-toolchain && git checkout 2025.06.07
+# the tag's github.com/bminor mirrors are gone: point at the current ones
+git config submodule.binutils.url https://github.com/gnutools/binutils-gdb.git
+git config submodule.gdb.url https://github.com/gnutools/binutils-gdb.git
+git config submodule.newlib.url https://github.com/cygwin/cygwin.git
+./configure --prefix=$HOME/opt/riscv --with-multilib-generator="rv64imac-lp64--"
+make -j$(nproc)
+cd ..
+```
+
+**3. This repository** (into a path without spaces):
+
+```bash
+git clone git@github.com:Khaiduy/chipyard-edhoc.git chipyard
 cd chipyard
 ```
 
-**Route A — build the hardware** (Chipyard toolchain, Vivado). Plan about 20 GB of
-free disk (plus Vivado), about 30 min for the setup and about 1 h per bitstream:
+**Route A — build the hardware** (~7 min of sources, ~4 GB, then the bitstream):
 
 ```bash
-./build-setup.sh riscv-tools --skip-marshal --skip-firesim   # not used by this design
-source env.sh
-./patches/apply.sh                # fork changes to fpga-shells and rocket-chip-blocks
+sudo apt install openjdk-17-jdk-headless device-tree-compiler
+./scripts/init-submodules-no-riscv-tools.sh   # Chipyard sources only; nothing is built
+./patches/apply.sh                            # fork changes to fpga-shells and rocket-chip-blocks
+wget https://github.com/llvm/circt/releases/download/firtool-1.61.0/firrtl-bin-linux-x64.tar.gz
+tar xzf firrtl-bin-linux-x64.tar.gz -C $HOME/opt
+
+# every new shell (or add to ~/.bashrc):
+export RISCV=$HOME/opt/riscv
+export PATH=$HOME/opt/riscv/bin:$HOME/opt/firtool-1.61.0/bin:$PATH
+source $HOME/Xilinx/Vivado/2024.2/settings64.sh
+
 cd fpga
 make SUB_PROJECT=arty100t CONFIG=EdhocRocket6475MHzArty100TConfig bitstream
 ```
 
 Accept the bitstream only if `report/timing.txt` shows WNS ≥ 0 and WHS ≥ 0
-(Lesson 1, section 5). Program both boards with `fpga/sw/export/common/board/program_two.tcl`.
+(Lesson 1, section 5). If WNS is slightly negative, or Vivado 2024.2 crashes after
+routing (`Abnormal program termination (11)`, make error 139), run the closure recipe
+of Lesson 1, section 5, (4/5) from `obj/post_opt.dcp`. Program both boards with `fpga/sw/export/common/board/program_two.tcl`.
 
 **Route B — firmware only** (boards already hold the EDHOC bitstream of this revision):
-only the RISC-V GCC, OpenOCD and Python are needed.
+steps 1–3 are enough (Vivado Lab Edition should also do for programming; not tested).
 
 ```bash
 cd fpga/sw/export
