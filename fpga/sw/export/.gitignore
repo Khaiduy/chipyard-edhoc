@@ -5,3 +5,4 @@ boardlogs/
 docs/slides/*.py
 docs/slides/__pycache__/
 docs/slides/template_uec.pptx
+docs/slides/img/

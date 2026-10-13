@@ -8,6 +8,12 @@
 #include "perf.h"   /* read_cycles() */
 
 #define UART1_BASE 0x64003000UL
+/* TRANSPORT=uart link on PMOD JB. SiFive UART: baud = f_pbus / (div + 1).
+ * Flow control in edhoc_transport.c makes the baud the only pace. */
+#ifndef UART1_BAUD
+#define UART1_BAUD 921600u
+#endif
+#define UART1_DIV (PERF_CPU_HZ / UART1_BAUD - 1)
 #define REG32_UART1(i) (((volatile uint32_t *)UART1_BASE)[(i) >> 2])
 
 static inline void uart1_putc(uint8_t c) {

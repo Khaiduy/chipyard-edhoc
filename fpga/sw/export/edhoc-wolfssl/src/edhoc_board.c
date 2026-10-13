@@ -21,7 +21,7 @@ void board_init(int is_responder)
 	REG32(uart, UART_REG_DIV) = EDHOC_UART_DIV;
 	REG32(uart, UART_REG_TXCTRL) = UART_TXEN;
 #ifndef EDHOC_TRANSPORT_RF
-	REG32_UART1(UART_REG_DIV) = EDHOC_UART_DIV;
+	REG32_UART1(UART_REG_DIV) = UART1_DIV;
 	REG32_UART1(UART_REG_TXCTRL) = UART_TXEN;
 	REG32_UART1(UART_REG_RXCTRL) = UART_RXEN;
 	/* UART1 link only. The images are loaded over JTAG with halt/resume,

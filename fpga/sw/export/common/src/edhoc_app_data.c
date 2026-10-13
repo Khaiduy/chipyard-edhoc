@@ -425,30 +425,11 @@ enum err app_data_run_responder(struct app_chan *ch, app_tx_fn tx, app_rx_fn rx,
 
 	/* Tell the initiator we are about to listen (see the matching comment in
 	 * app_data_run_initiator). Sending this last means the very next thing we
-	 * do is enter the receive loop.
-	 *
-	 * Settle first. UART1 has no usable receive FIFO, so this record is lost
-	 * outright if it is transmitted before the initiator reaches its matching
-	 * app_data_recv(). Which side gets there first is suite-dependent: with
-	 * method 3 on the P-256/P-384/X448 suites the responder arrives well
-	 * ahead of the initiator, the ready record went into a deaf line and the
-	 * initiator then blocked until its receive timeout (observed as
-	 * "ready-wait FAIL 7" on hardware for m3 suites 2,3,5,6,24,25).
-	 *
-	 * Retransmitting is not an option: the AEAD nonce and AAD are derived
-	 * from tx_seq/rx_seq, so a duplicate record desynchronises every
-	 * subsequent one. Waiting is the seq-safe fix. This is a timing
-	 * mitigation, not a protocol guarantee -- a peer that is slower than
-	 * APP_READY_SETTLE_CYC would still miss it. */
+	 * do is enter the receive loop. Both transports deliver it only once the
+	 * initiator is receiving: the radio repeats each frame until it is
+	 * acknowledged, UART1 waits for the receiver's FRAME_READY. */
 	{
 		static const uint8_t ready = 'R';
-#ifndef EDHOC_TRANSPORT_RF
-		/* UART1 only: the radio link ACKs and retries every frame. */
-		uint64_t settle_start = read_cycles();
-
-		while (read_cycles() - settle_start < APP_READY_SETTLE_CYC)
-			;
-#endif
 
 		r = app_data_send(ch, &ready, 1, tx, sock);
 		if (r != ok) {

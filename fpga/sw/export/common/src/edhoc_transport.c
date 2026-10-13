@@ -85,32 +85,32 @@ static uint8_t frame_cksum(uint32_t len, const uint8_t *p)
     return c;
 }
 
-/* Per-byte pacing for the peer's polling receiver. uart1_putc() already
- * blocks on the TX FIFO, so this only exists to stop the far side dropping
- * bytes; it is not flow control. The historical 50000 cost ~275,000 cycles
- * (3.7 ms) per byte at 75 MHz, roughly 200x the 1,300-cycle line time at
- * 57600 baud, and dominated the handshake: 2.27 billion cycles total, of
- * which the crypto is a few million.
- *
- * 2000 is the default: values down to 1000 were verified good on hardware
- * over repeated runs, so this keeps 2x margin while cutting handshake wall
- * time ~25x. Raise it with -DFRAME_TX_PACING=<n> if a slower peer drops
- * bytes. */
-#ifndef FRAME_TX_PACING
-#define FRAME_TX_PACING 2000
-#endif
+/* Flow control. The receiver polls UART1 and its RX FIFO holds only a few
+ * bytes, but between frames it is busy (AEAD, SD writes), so a sender that
+ * just transmits loses bytes. While a receiver waits for a frame it sends
+ * FRAME_READY every READY_EVERY_CYC; the sender drops what is already
+ * queued (stale READYs), waits for a fresh one, then sends the whole frame
+ * at line rate. */
+#define FRAME_READY     0xA5
+#define READY_EVERY_CYC (PERF_CPU_HZ / 5000)        /* 0.2 ms */
+#define READY_WAIT_CYC  (300ull * PERF_CPU_HZ)      /* 5 min, as the radio */
 
 static enum err frame_send(struct byte_array *data, int initiator)
 {
+    uint64_t end = read_cycles() + READY_WAIT_CYC;
+
     (void)initiator;
+    while (uart1_getc() >= 0)
+        ;
+    while (uart1_getc() != FRAME_READY)
+        if (read_cycles() > end)
+            return transport_deinitialized;
     uart1_putc(FRAME_SYNC0);
     uart1_putc(FRAME_SYNC1);
     uart1_putc((data->len >> 8) & 0xFF);
     uart1_putc(data->len & 0xFF);
-    for (uint32_t i = 0; i < data->len; i++) {
+    for (uint32_t i = 0; i < data->len; i++)
         uart1_putc(data->ptr[i]);
-        for (volatile int d = 0; d < FRAME_TX_PACING; d++);
-    }
     uart1_putc(frame_cksum(data->len, data->ptr));
     return ok;
 }
@@ -126,8 +126,14 @@ static enum err frame_recv(struct byte_array *data, const char *tag, int initiat
         uint32_t len = 0, i;
         uint8_t want;
 
+        uint64_t ready_at = 0;
+
         timeout = 1000000000;
         while (timeout-- > 0) {
+            if (!got_s0 && read_cycles() >= ready_at) {
+                uart1_putc(FRAME_READY);
+                ready_at = read_cycles() + READY_EVERY_CYC;
+            }
             if ((c = uart1_getc()) < 0) continue;
             if (got_s0 && c == FRAME_SYNC1) break;
             got_s0 = (c == FRAME_SYNC0);

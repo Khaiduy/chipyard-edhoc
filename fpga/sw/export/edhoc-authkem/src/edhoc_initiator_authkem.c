@@ -121,7 +121,7 @@ int main(void)
      * clock; SiFive UART gives baud = f_pbus / (div + 1). */
     REG32(uart, UART_REG_DIV) = EDHOC_UART_DIV;
     REG32(uart, UART_REG_TXCTRL) = UART_TXEN;
-    REG32_UART1(UART_REG_DIV) = EDHOC_UART_DIV;
+    REG32_UART1(UART_REG_DIV) = UART1_DIV;
     REG32_UART1(UART_REG_TXCTRL) = UART_TXEN;
     REG32_UART1(UART_REG_RXCTRL) = UART_RXEN;
 

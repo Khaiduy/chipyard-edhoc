@@ -36,14 +36,6 @@
 #define APP_KEY_LABEL 32768u
 #define APP_IV_LABEL  32769u
 
-/* Settle time the responder waits before sending its ready record, so the
- * initiator has reached app_data_recv() first. Two seconds at 75 MHz: the
- * worst observed initiator-lag was on method 3 / suite 25, and the cost is
- * paid once per session. Override with -DAPP_READY_SETTLE_CYC=<cycles>. */
-#ifndef APP_READY_SETTLE_CYC
-#define APP_READY_SETTLE_CYC (2u * PERF_CPU_HZ)
-#endif
-
 /* Number of request/response exchanges app_data_run_*() performs. */
 #define APP_DEMO_ROUNDS 3
 
