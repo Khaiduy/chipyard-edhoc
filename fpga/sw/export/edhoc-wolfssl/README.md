@@ -80,7 +80,7 @@ Options:
 * `TRANSPORT=rf` (default): messages travel over an MRF24J40 802.15.4 module on
   PMOD JC (SPI1 @ `0x64006000`); the bitstream must include `WithArtyJCRadio`.
   `TRANSPORT=uart` uses three wires between the two PMOD JB ports instead (TX and
-  RX crossed, GND), 921,600 baud (`UART1_BAUD=` to change) with receiver-driven
+  RX crossed, GND), 921,600 baud (`EXTRA_CFLAGS=-DUART1_BAUD=<baud>` to change, same on both boards) with receiver-driven
   flow control: about 3× the radio's speed for files.
 * `DEBUG=1` step-by-step prints (incl. `PRK_out`).
 * `TIMING=1` prints, after the handshake, the compute time of each message

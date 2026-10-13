@@ -1,5 +1,6 @@
 #include "edhoc_transport.h"
 #include "kprintf.h"
+#include "stack_probe.h"
 
 /* Accumulates cycles spent inside transport (UART or radio TX/RX, including waits and
  * inter-byte delays). Subtract from edhoc_*_run total to get COMPUTE-ONLY. */
@@ -192,6 +193,11 @@ static enum err frame_recv(struct byte_array *data, const char *tag, int initiat
  * would leave the peer repeating until RF_SEND_TIMEOUT_MS. Keep reading. */
 void transport_idle(void)
 {
+    /* The STACK line after the handshake cannot see the application step
+     * (file transfer, SD writes); this one covers the whole run. */
+    kprintf("STACK whole run: peak %u B, reserve %u B%s\r\n",
+            (unsigned)stack_highwater(), (unsigned)stack_reserve(),
+            stack_overran_reserve() ? "  OVERRAN-RESERVE" : "");
 #ifdef EDHOC_TRANSPORT_RF
     kprintf("RF: frames=%u repeats=%u crc_err=%u reinits=%u\r\n",
             (unsigned)rf_stats.tx_frames, (unsigned)rf_stats.tx_repeats,

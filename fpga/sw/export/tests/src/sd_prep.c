@@ -5,8 +5,10 @@
  *       format the card (tools/mksd.sh layout), then write SEND.BIN
  *   make sd_prep EXTRA_CFLAGS=-DSD_PREP_SEND=1048576
  *       (re)write SEND.BIN only
- *   make sd_prep EXTRA_CFLAGS=-DSD_PREP_VERIFY
- *       check RECV.BIN against the same generator
+ *   make sd_prep EXTRA_CFLAGS=-DSD_PREP_VERIFY=1048576
+ *       check RECV.BIN: exactly that many bytes, equal to the same generator
+ *       (plain -DSD_PREP_VERIFY skips the length check; a short file would
+ *       then still compare equal over its own length)
  *
  * SEND.BIN holds a fixed pseudo-random sequence, so the receiving board can
  * verify RECV.BIN without the original. Prints the CRC-32 the file transfer
@@ -87,6 +89,13 @@ static int run(void)
 		seed = 0x5EED0001u;
 		if ((rc = fat32_open(&f, "RECV    BIN")) != FAT_OK)
 			return kprintf("no RECV.BIN (%d)\r\n", rc), 1;
+#if SD_PREP_VERIFY > 1
+		if (f.size != (uint32_t)SD_PREP_VERIFY)
+			return kprintf("RECV.BIN: %u bytes, want %u\r\n", (unsigned)f.size,
+				       (unsigned)SD_PREP_VERIFY), 1;
+#else
+		kprintf("length not checked: build with -DSD_PREP_VERIFY=<bytes>\r\n");
+#endif
 		while (f.pos < f.size) {
 			uint32_t n = f.size - f.pos < CHUNK ? f.size - f.pos : CHUNK;
 			uint8_t want[CHUNK];
