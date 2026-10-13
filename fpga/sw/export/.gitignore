@@ -1,3 +1,7 @@
 build/
 build-*/
 boardlogs/
+# slide generator stays local; the repo carries the PPTX + PDF only
+docs/slides/*.py
+docs/slides/__pycache__/
+docs/slides/template_uec.pptx
