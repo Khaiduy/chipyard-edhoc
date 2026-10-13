@@ -67,6 +67,9 @@ endif
 ifndef PROVISION_SRC
 $(error PROFILE=production requires PROVISION_SRC=<files> implementing edhoc_platform_entropy() -- see include/authkem_provision.h)
 endif
+ifeq ($(DEBUG),1)
+$(error PROFILE=production is incompatible with DEBUG=1: debug builds print every key, PRK_out included)
+endif
 AK_CFLAGS_PROFILE = -DEDHOC_PROFILE_PRODUCTION
 AK_COMMON_SRC_PROFILE = $(PROVISION_SRC)
 AK_INCLUDES_PROFILE = -I$(PROVISION_DIR)

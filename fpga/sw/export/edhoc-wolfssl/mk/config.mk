@@ -47,6 +47,9 @@ DEMO_RNG := 0
 ifndef PROVISION_SRC
 $(error PROFILE=production requires PROVISION_SRC=<files> implementing include/edhoc_provision.h (entropy + long-term signing keys))
 endif
+ifeq ($(DEBUG),1)
+$(error PROFILE=production is incompatible with DEBUG=1: debug builds print every key, PRK_out included)
+endif
 CFLAGS += -DEDHOC_PROFILE_PRODUCTION
 else
 $(error Invalid PROFILE=$(PROFILE). Use demo or production)
@@ -85,7 +88,9 @@ CRYPTO_SUITE ?= 2
 # ── wolfCrypt library root ───────────────────────────────────────────────
 WOLFSSL_ROOT     = $(CURDIR)/wolfssl
 WOLFCRYPT_DIR    = $(WOLFSSL_ROOT)/wolfcrypt/src
-WOLFCRYPT_CFLAGS = -DWOLFSSL_USER_SETTINGS -I$(WOLFSSL_ROOT) -include $(WOLFSSL_ROOT)/user_settings.h
+# -fwrapv: sp_c64.c relies on signed overflow wrapping (C leaves it undefined;
+# UBSan flags it in the P-256/P-384 code). Signed << is defined by GCC.
+WOLFCRYPT_CFLAGS = -fwrapv -DWOLFSSL_USER_SETTINGS -I$(WOLFSSL_ROOT) -include $(WOLFSSL_ROOT)/user_settings.h
 WOLFCRYPT_CFLAGS += -I$(CURDIR)/../common/externals/monocypher -I$(CURDIR)/../common/crypto
 
 # ── wolfCrypt component source sets ──────────────────────────────────────

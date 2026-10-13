@@ -70,6 +70,8 @@ void sha256_update(struct sha256_ctx *c, const uint8_t *in, uint32_t len)
 {
 	uint32_t fill = (uint32_t)(c->len % SHA256_BLOCK);
 
+	if (!len)               /* in may be NULL: memcpy must not see it */
+		return;
 	c->len += len;
 	if (fill) {
 		uint32_t n = SHA256_BLOCK - fill;

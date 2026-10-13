@@ -105,6 +105,8 @@ void sha384_update(struct sha384_ctx *c, const uint8_t *in, uint32_t len)
 {
 	uint32_t fill = (uint32_t)(c->len % SHA384_BLOCK);
 
+	if (!len)               /* in may be NULL: memcpy must not see it */
+		return;
 	c->len += len;
 	if (fill) {
 		uint32_t n = SHA384_BLOCK - fill;
