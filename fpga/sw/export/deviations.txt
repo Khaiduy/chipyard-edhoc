@@ -103,3 +103,5 @@ Kiểm tra lại: 78 build, 42 host test, 39/39 cặp board PASS.
 - Bài 5: mỗi sự cố = triệu chứng/quan sát/nguyên nhân/sửa/kiểm tra/khôi phục; kiểm tra ở mọi bước + ví dụ lỗi ghi SD thật (A báo SENT, B "not stored"); commit FAT32 không an toàn khi mất điện; quy trình file lớn, đơn vị MiB/KB/s, 100 MiB là ước tính.
 - Mọi bài: ghi chú đáp án bài tập, nhãn "Run this / Example output / Simplified", số trang footer đúng. 236 slide.
 - Code: common/board/list_boards.sh (mới); run_one.sh tìm console theo serial trong boards.env; firmware in "RF: frames= repeats= crc_err= reinits=" khi kết thúc (radio). Kiểm tra: s2_m3 PASS, akTBD3 PASS prk=match, loopback PASS.
+- PRK_out của AuthKEM chỉ in ra với DEBUG=1 (trước đây in ở mọi bản build, kể cả production). Bản thường: prk=-; DEBUG=1: prk=match. Kiểm tra: akTBD3 PASS prk=- (không có PRK_out trên console), akTBD3 DEBUG=1 PASS prk=match.
+- Code đưa lên repo riêng (private) github.com/Khaiduy/chipyard-edhoc, tag edhoc-course-v1; slide và README gốc ghi địa chỉ này (xin quyền truy cập từ tác giả).

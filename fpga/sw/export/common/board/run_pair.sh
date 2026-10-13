@@ -51,7 +51,7 @@ for f in $LI $LR; do
 	grep -q "APP DATA OK" $f || { ok=0; why="$why no-APP-OK($(basename $f))"; }
 	grep -q "OVERRAN-RESERVE" $f && { ok=0; why="$why OVERRAN($(basename $f))"; }
 done
-# PRK_out: a label line, then lines of hex bytes (authkem app or DEBUG=1 dump)
+# PRK_out: a label line, then lines of hex bytes (printed by DEBUG=1 builds only)
 prk_of() { awk '/PRK_out/ { if (got) exit; f = 1; next }
 	f && /^ *([0-9A-F][0-9A-F] *)+$/ { got = got $0; next } { f = 0 }
 	END { gsub(/ /, "", got); print got }' "$1"; }

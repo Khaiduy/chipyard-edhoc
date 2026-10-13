@@ -456,7 +456,7 @@ b = d.code(s, """cd fpga/sw/export/edhoc-authkem
 make edhoc_authkem_initiator edhoc_authkem_responder SUITE=TBD3 TIMING=1
 ../common/board/run_pair.sh akTBD3 build-tbd3/edhoc_authkem_initiator.elf \\
                                     build-tbd3/edhoc_authkem_responder.elf
-akTBD3 PASS hs=1.241956s stack_i=18592 stack_r=16368 prk=match 23s""", 0.4, 0.95, 12.5, 2.0, size=15,
+akTBD3 PASS hs=1.239387s stack_i=18592 stack_r=16368 prk=- 23s""", 0.4, 0.95, 12.5, 2.0, size=15,
            title="Run this — from fpga/sw/export/edhoc-authkem; last line = expected output")
 b = d.code(s, """make unit-test SUITE=TBD2        # suite gate, KEM, CBOR codecs, error messages
 make loopback-test SUITE=TBD3 LOOPBACK_LOG=build/loopback.txt
@@ -538,7 +538,8 @@ d.text(s, [
 s = d.content(S5, "(5/5) What you should see")
 d.table(s, [
     ["Run", "You should see"],
-    ["TBD1 / TBD2 / TBD3 on two boards (run_pair.sh)", "PASS, prk=match"],
+    ["TBD1 / TBD2 / TBD3 on two boards (run_pair.sh)", "PASS; prk=match with DEBUG=1 "
+                                                         "builds"],
     ["Host unit tests + loopback", "PASS for each suite"],
     ["Independent reference model (authkem_ref.py)", "REFERENCE MODEL: PASS"],
     ["Strongest configured option, TBD3 (AES-256 + ML-KEM-1024 + SHA-384)",
@@ -590,7 +591,7 @@ d.table(s, [
 ], 0.4, 0.95, 12.5, 3.6, size=14, col_w=[2.6, 5.9, 4.0])
 d.text(s, [
     "Restore after exercise 3: `git checkout edhoc-authkem/mk/config.mk` (from "
-    "*fpga/sw/export*), rebuild both roles, rerun: PASS, prk=match.",
+    "*fpga/sw/export*), rebuild both roles, rerun: PASS.",
     "Negative cases to recognise: a peer whose credential is not in your trust anchors "
     "→ EDHOC FAIL when its kid is looked up; a modified ciphertext → no error from "
     "decapsulation, but the next AEAD tag or MAC fails.",

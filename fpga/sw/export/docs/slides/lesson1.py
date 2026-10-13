@@ -37,7 +37,8 @@ d.purpose("Today’s lecture purpose:", [
     "A7-100T boards: SD card, radio, UART and JTAG on the four PMOD ports.",
     "Build the bitstream, close timing at 75 MHz, program both boards and "
     "check every peripheral with a test program.",
-], footer="Repository: [GitHub URL]   ·   all paths are relative to chipyard-1.11.0/")
+], footer="Repository: github.com/Khaiduy/chipyard-edhoc (private: ask the author for "
+          "access)   ·   paths are relative to its root")
 d.outline()
 
 # ---------------------------------------------------------------- 1. start here
@@ -105,9 +106,9 @@ d.text(s, [
 ], 0.4, 5.75, 12.5, 1.3, size=16)
 
 s = d.content(S0, "(4/7) Get the code — two routes")
-b = d.code(s, """git clone [GitHub URL] chipyard
+b = d.code(s, """git clone git@github.com:Khaiduy/chipyard-edhoc.git chipyard
 cd chipyard
-git checkout [revision]          # the revision these slides describe""",
+git checkout edhoc-course-v1     # the revision these slides describe""",
            0.4, 0.95, 12.5, 1.2, size=15, title="Run this — on your PC")
 d.table(s, [
     ["Route", "Your goal", "Setup", "Then"],
@@ -121,6 +122,8 @@ d.table(s, [
      "Lesson 1, section 6, then Lesson 2"],
 ], 0.4, d.below(b, 0.3), 12.5, 2.3, size=15, col_w=[2.6, 3.9, 3.9, 2.1])
 d.text(s, [
+    "The repository is **private**: ask the author to add your GitHub account, then "
+    "clone with your own SSH key.",
     "No prebuilt bitstream ships with the course: route B needs a bitstream built "
     "from the **same revision** (route A), e.g. by your lab, written to the boards' "
     "flash or kept as a *.bit*.",

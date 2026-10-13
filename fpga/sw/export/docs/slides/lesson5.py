@@ -548,7 +548,7 @@ XFER: SD write failed at 618 (-1)
 XFER: received 1048576 bytes, CRC cffbfb2e OK, not stored (-1)
 XFER FAIL 3
 APP DATA FAIL: 3""", 6.7, 0.95, 6.4, 1.7, size=12, title="Example output — board B, same run")
-d.console(s, "xferfix2 FAIL hs=1.236142s ... prk=match 122s no-APP-OK(xferfix2.res.log)",
+d.console(s, "xferfix2 FAIL hs=1.236142s ... 122s no-APP-OK(xferfix2.res.log)",
           0.4, 2.9, 12.5, 0.6, size=13, title="Example output — run_pair.sh")
 d.text(s, [
     "The communication path worked: the handshake, every record and the file CRC are "
@@ -736,11 +736,12 @@ d.table(s, [
 s = d.content(S6, "(3/3) Reproduce everything")
 d.table(s, [
     ["Step", "Lesson", "You should see"],
-    ["1. Clone [GitHub URL], build the bitstream, program both boards", "1",
+    ["1. Clone (Lesson 1, (4/7)), build the bitstream, program both boards", "1",
      "timing met, jtag_test PASS"],
     ["2. Toolchain, peripheral + crypto tests", "2", "every test PASS"],
     ["3. EDHOC pairs, RFC 9529 test", "3", "PASS per pair, RFC9529 PASS"],
-    ["4. AuthKEM TBD1–3, reference model", "4", "prk=match, REFERENCE MODEL: PASS"],
+    ["4. AuthKEM TBD1–3, reference model", "4", "PASS (prk=match with DEBUG=1), "
+                                                "REFERENCE MODEL: PASS"],
     ["5. Prepare cards, transfer, verify RECV.BIN", "5", "XFER RECV … OK, then 0 bytes "
                                                          "differ"],
 ], 0.4, 0.95, 12.5, 3.4, size=16, col_w=[7.2, 1.3, 4.0])

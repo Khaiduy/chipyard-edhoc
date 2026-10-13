@@ -200,6 +200,8 @@ int main(void)
 		stack_overran_reserve() ? "  OVERRAN-RESERVE" : "");
 	kprintf("STACK canary-left %u B\r\n", (unsigned)stack_canary_bytes());
 
+#ifdef DEBUG_PRINT
+    /* The session secret: DEBUG=1 builds only (run_pair.sh compares the two). */
     kprintf("-----------------------\r\n");
     kprintf("PRK_out (%u bytes):\r\n  ", (unsigned)prk_out.len);
     for (uint32_t i = 0; i < prk_out.len; i++)
@@ -209,6 +211,7 @@ int main(void)
     uint8_t xor = 0;
     for (uint32_t i = 0; i < prk_out.len; i++) xor ^= prk_out.ptr[i];
     kprintf("[xor:0x%02X]\r\n", xor);
+#endif
 
     /* "EDHOC OK" is the loader's completion marker — print it LAST. */
     kprintf("EDHOC OK!\r\n");

@@ -73,8 +73,8 @@ peak stack, then runs the encrypted application-data echo and prints
 `APP DATA OK`.
 
 `../common/board/run_pair.sh <name> <initiator.elf> <responder.elf>` does the
-same and prints one PASS/FAIL line; it also compares the `PRK_out` both sides
-print (`prk=match`). `VERBOSE=1` in front shows both consoles live, and a
+same and prints one PASS/FAIL line. Only `DEBUG=1` builds print `PRK_out` (the
+session secret); run_pair.sh then compares both sides (`prk=match`). `VERBOSE=1` in front shows both consoles live, and a
 `DEBUG=1` build adds the intermediate values (message_1, TH_2, salt, MAC_2
 computed and received, ...).
 

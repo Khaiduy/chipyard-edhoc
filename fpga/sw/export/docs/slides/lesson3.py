@@ -219,8 +219,8 @@ d.table(s, [
                                                                         "was stored anywhere"],
     ["prk=match", "run_pair.sh found PRK_out printed on both consoles and the bytes are "
                   "equal", "—"],
-    ["prk=-", "no PRK_out was printed (release builds of edhoc-wolfssl): no direct "
-              "comparison", "that they differ"],
+    ["prk=-", "no PRK_out was printed (every build without DEBUG=1, so the secret "
+              "never reaches the console): no direct comparison", "that they differ"],
     ["RFC 9529 test PASS", "for the published inputs, every value equals the RFC",
      "anything about other suites or methods"],
     ["host loopback PASS", "both roles of the same code agree on PRK_out", "radio or "

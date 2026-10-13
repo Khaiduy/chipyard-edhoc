@@ -1,3 +1,76 @@
+# EDHOC on a Rocket RV64 SoC (Arty A7-100T) — Chipyard 1.11.0 fork
+
+This fork adds an EDHOC SoC and its firmware to Chipyard 1.11.0: a small 64-bit
+Rocket core at 75 MHz with a 64 KiB on-chip scratchpad, on two Digilent Arty
+A7-100T boards that talk over an MRF24J40 802.15.4 radio. The firmware runs
+EDHOC (RFC 9528, methods 0–3, all 9 cipher suites), post-quantum EDHOC AuthKEM
+(ML-KEM, suites TBD1–TBD3), and an encrypted SD-card-to-SD-card file transfer.
+
+The step-by-step course (5 lessons, PPTX + PDF) is in
+[`fpga/sw/export/docs/slides/`](fpga/sw/export/docs/slides/): start with Lesson 1,
+section "Start Here". This repository is private; ask the author for access.
+
+## What you need
+
+* 2 × Arty A7-100T, 2 × micro-USB cable, 2 × FTDI C232HM-DDHSL-0 (JTAG on PMOD JD),
+  2 × PmodSD + microSD card (PMOD JA), 2 × MRF24J40MA radio on a PMOD adapter (PMOD JC).
+* Ubuntu 24.04, Vivado 2024.2, `riscv64-unknown-elf-gcc` 15.1 (rv64imac/lp64),
+  OpenOCD 0.12, Python 3.
+
+## Setup
+
+```bash
+git clone git@github.com:Khaiduy/chipyard-edhoc.git chipyard
+cd chipyard
+git checkout edhoc-course-v1      # the revision the slides describe
+```
+
+**Route A — build the hardware** (Chipyard toolchain, Vivado):
+
+```bash
+./build-setup.sh riscv-tools
+source env.sh
+./scripts/init-fpga.sh
+./patches/apply.sh                # fork changes to fpga-shells and rocket-chip-blocks
+cd fpga
+make SUB_PROJECT=arty100t CONFIG=EdhocRocket6475MHzArty100TConfig bitstream
+```
+
+Accept the bitstream only if `report/timing.txt` shows WNS ≥ 0 and WHS ≥ 0
+(Lesson 1, section 5). Program both boards with `fpga/sw/export/common/board/program_two.tcl`.
+
+**Route B — firmware only** (boards already hold the EDHOC bitstream of this revision):
+only the RISC-V GCC, OpenOCD and Python are needed.
+
+```bash
+cd fpga/sw/export
+./common/board/list_boards.sh     # put your four serials into common/board/boards.env
+cd edhoc-wolfssl
+make edhoc_m3_initiator edhoc_m3_responder CRYPTO_SUITE=2
+../common/board/run_pair.sh s2_m3 build/edhoc_m3_initiator.elf build/edhoc_m3_responder.elf
+#  -> s2_m3 PASS hs=2.74s stack_i=5360 stack_r=4736 prk=- 7s
+```
+
+## Where things are
+
+| Path | Contents |
+|------|----------|
+| `generators/chipyard/src/main/scala/config/EdhocConfigs.scala` | `EdhocRocket64Config`: the SoC |
+| `fpga/src/main/scala/arty100t/` | board configs (`EdhocRocket6475MHzArty100TConfig`), shell, overlays, binders |
+| `fpga/src/main/resources/arty35t/sdboot/` | boot ROM (SD boot) |
+| `patches/` | changes to the `fpga-shells` and `rocket-chip-blocks` submodules |
+| `fpga/sw/export/` | firmware: [`edhoc-wolfssl`](fpga/sw/export/edhoc-wolfssl/), [`edhoc-authkem`](fpga/sw/export/edhoc-authkem/), `tests`, `common`, board scripts — see its [README](fpga/sw/export/README.md) |
+| `fpga/sw/export/docs/slides/` | the course |
+
+`fpga/sw/export/edhoc-wolfssl/wolfssl/` is a wolfCrypt subset under GPLv2; the rest of
+Chipyard keeps its BSD licence (`LICENSE`).
+
+---
+
+## Upstream Chipyard
+
+The text below is Chipyard's own README (version 1.11.0).
+
 ![CHIPYARD](https://github.com/ucb-bar/chipyard/raw/main/docs/_static/images/chipyard-logo-full.png)
 
 # Chipyard Framework [![Test](https://github.com/ucb-bar/chipyard/actions/workflows/chipyard-run-tests.yml/badge.svg)](https://github.com/ucb-bar/chipyard/actions)
