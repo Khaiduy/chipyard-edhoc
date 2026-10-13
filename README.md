@@ -15,21 +15,26 @@ section "Start Here". This repository is private; ask the author for access.
 * 2 × Arty A7-100T, 2 × micro-USB cable, 2 × FTDI C232HM-DDHSL-0 (JTAG on PMOD JD),
   2 × PmodMicroSD + microSD card (PMOD JA), 2 × MRF24J40MA radio on a PMOD adapter (PMOD JC).
 * Ubuntu 24.04, Vivado 2024.2, `riscv64-unknown-elf-gcc` 15.1 (rv64imac/lp64),
-  OpenOCD 0.12, Python 3.
+  OpenOCD 0.12, Python 3.12 with a venv for the host tools:
+
+  ```bash
+  python3 -m venv ~/edhoc-venv && . ~/edhoc-venv/bin/activate
+  pip install pyfatfs pycryptodome cryptography kyber-py "setuptools<81"   # pyfatfs needs pkg_resources
+  ```
 
 ## Setup
 
 ```bash
-git clone git@github.com:Khaiduy/chipyard-edhoc.git chipyard
+git clone git@github.com:Khaiduy/chipyard-edhoc.git chipyard   # into a path without spaces
 cd chipyard
 ```
 
-**Route A — build the hardware** (Chipyard toolchain, Vivado):
+**Route A — build the hardware** (Chipyard toolchain, Vivado). Plan about 20 GB of
+free disk (plus Vivado), about 30 min for the setup and about 1 h per bitstream:
 
 ```bash
-./build-setup.sh riscv-tools
+./build-setup.sh riscv-tools --skip-marshal --skip-firesim   # not used by this design
 source env.sh
-./scripts/init-fpga.sh
 ./patches/apply.sh                # fork changes to fpga-shells and rocket-chip-blocks
 cd fpga
 make SUB_PROJECT=arty100t CONFIG=EdhocRocket6475MHzArty100TConfig bitstream
@@ -43,7 +48,7 @@ only the RISC-V GCC, OpenOCD and Python are needed.
 
 ```bash
 cd fpga/sw/export
-./common/board/list_boards.sh     # put your four serials into common/board/boards.env
+./common/board/list_boards.sh     # boards.env ships with the author's serials: put your four in
 cd edhoc-wolfssl
 make edhoc_m3_initiator edhoc_m3_responder CRYPTO_SUITE=2
 ../common/board/run_pair.sh s2_m3 build/edhoc_m3_initiator.elf build/edhoc_m3_responder.elf
