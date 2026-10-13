@@ -89,11 +89,16 @@ static void sd_poweron(void)
 
 static int sd_cmd0(void)
 {
-	int rc;
+	int tries = 10;
+	uint8_t r;
 	dputs("CMD0");
-	rc = (sd_cmd(0x40, 0, 0x95) != 0x01);
-	sd_cmd_end();
-	return rc;
+	/* The first CMD0 after the card powers up can read back a junk byte
+	 * (seen: 0x3f) while the card leaves SD mode, so retry. */
+	do {
+		r = sd_cmd(0x40, 0, 0x95);
+		sd_cmd_end();
+	} while (r != 0x01 && --tries > 0);
+	return r != 0x01;
 }
 
 static int sd_cmd8(void)

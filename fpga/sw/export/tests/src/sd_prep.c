@@ -10,6 +10,11 @@
  *       (plain -DSD_PREP_VERIFY skips the length check; a short file would
  *       then still compare equal over its own length)
  *
+ *   cp build/gpio_test.bin build/boot.bin
+ *   make -B sd_prep EXTRA_CFLAGS=-DSD_PREP_BOOT
+ *       write build/boot.bin raw to LBA 2048, where the boot ROM loads it from
+ *       at reset (what common/board/sd_boot.sh does from a PC)
+ *
  * SEND.BIN holds a fixed pseudo-random sequence, so the receiving board can
  * verify RECV.BIN without the original. Prints the CRC-32 the file transfer
  * reports, for cross-checking.
@@ -48,6 +53,29 @@ static uint32_t crc32(uint32_t crc, const uint8_t *p, uint32_t n)
 }
 #endif
 
+#ifdef SD_PREP_BOOT
+#define BOOT_LBA 2048u
+__asm__(".section .rodata\n.balign 8\nboot_img:\n.incbin \"build/boot.bin\"\n"
+	"boot_img_end:\n.previous");
+extern const uint8_t boot_img[], boot_img_end[];
+
+static int write_boot(void)
+{
+	static uint8_t sec[512];
+	uint32_t len = (uint32_t)(boot_img_end - boot_img);
+
+	for (uint32_t off = 0; off < len; off += 512) {
+		for (uint32_t i = 0; i < 512; i++)
+			sec[i] = off + i < len ? boot_img[off + i] : 0;
+		if (sd_write(BOOT_LBA + off / 512, sec))
+			return kprintf("boot write FAIL at LBA %u\r\n",
+				       (unsigned)(BOOT_LBA + off / 512)), 1;
+	}
+	kprintf("BOOT IMAGE: %u bytes -> LBA %u\r\n", (unsigned)len, (unsigned)BOOT_LBA);
+	return 0;
+}
+#endif
+
 static int run(void)
 {
 	struct fat32_file f;
@@ -63,6 +91,10 @@ static int run(void)
 	if ((rc = sd_format(total)) != SD_FMT_OK)
 		return kprintf("format FAIL %d\r\n", rc), 1;
 	kprintf("format OK\r\n");
+#endif
+#ifdef SD_PREP_BOOT
+	if (write_boot())
+		return 1;
 #endif
 	if ((rc = fat32_mount()) != FAT_OK)
 		return kprintf("mount FAIL %d\r\n", rc), 1;
