@@ -112,3 +112,4 @@ Kiểm tra lại: 78 build, 42 host test, 39/39 cặp board PASS.
 - Slide: hình minh hoạ cách nối 2 board (ảnh board của Digilent, vẽ thêm module/dây/nhãn), hình board có nhãn JA–JD; slide mới "A wired link: UART1 at 921,600 baud". Tổng 238 slide.
 - Hình minh hoạ vẽ lại trên ảnh do người dùng cung cấp (Arty nhìn từ trên, PmodMicroSD, MRF24J40MA); thêm ảnh module vào các slide SD/radio/boot. Module thẻ nhớ là PmodMicroSD (không phải PmodSD): đã sửa tên trong slide và README.
 - Hình: cáp C232HM (ảnh FTDI) tách đôi — đầu dây cắm JD, đầu USB cắm PC; ảnh C232HM thay ô PHOTO cuối cùng ở slide JTAG. Không còn ô PHOTO trống.
+- Hình nối dây: không chồng lấn, không bị cắt (script tự kiểm tra hộp ảnh/chữ/dây); dây UART song song có nhãn TX→RX; anten MRF24J40MA hướng ra ngoài, có sóng radio.
