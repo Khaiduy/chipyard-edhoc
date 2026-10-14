@@ -94,11 +94,10 @@ cd $REPO/fpga
 make SUB_PROJECT=arty100t CONFIG=EdhocRocket6475MHzArty100TConfig bitstream
 ```
 
-Accept the bitstream only if `report/timing.txt` shows WNS ≥ 0 and WHS ≥ 0
-(Lesson 1, section 5). If WNS is slightly negative, or Vivado 2024.2 crashes after
-routing (`Abnormal program termination (11)`, make error 139), run the closure recipe
-of Lesson 1, section 5, (4/5) from `obj/post_opt.dcp`. Program both boards with
-`fpga/sw/export/common/board/program_two.tcl` (Lesson 1, section 6).
+Timing check: `obj/report/timing.txt`, Lesson 1, section 5. Timing closure recipe
+(for a slightly negative WNS, or make error 139 “Abnormal program termination (11)”
+after routing): Lesson 1, section 5, (4/5). Programming both boards:
+`fpga/sw/export/common/board/program_two.tcl`, Lesson 1, section 6.
 
 **Route B — firmware only** (boards already hold the EDHOC bitstream of this revision;
 steps 1–3 and 5 are enough; Vivado Lab Edition should also do for programming, not tested):
