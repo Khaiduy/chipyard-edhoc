@@ -14,13 +14,9 @@ section "Start Here". This repository is private; ask the author for access.
 
 * 2 × Arty A7-100T, 2 × micro-USB cable, 2 × FTDI C232HM-DDHSL-0 (JTAG on PMOD JD),
   2 × PmodMicroSD + microSD card (PMOD JA), 2 × MRF24J40MA radio on a PMOD adapter (PMOD JC).
-* Ubuntu 24.04 (everything else is installed under Setup), plus a Python venv for
-  the host tools (after step 2 of Setup):
-
-  ```bash
-  python3 -m venv ~/edhoc-venv && . ~/edhoc-venv/bin/activate
-  pip install pyfatfs pycryptodome cryptography kyber-py "setuptools<81"   # pyfatfs needs pkg_resources
-  ```
+* Ubuntu 24.04. Everything else is installed below, in this order. Each block can be
+  pasted into any terminal: blocks start with an explicit `cd`, and the settings go into
+  `~/.bashrc`, so new terminals have them too.
 
 ## Setup
 
@@ -28,20 +24,25 @@ No conda and no Chipyard `build-setup.sh`: only the tools below are installed.
 
 **1. Vivado 2024.2** (both routes). Run the AMD Unified Installer
 (`FPGAs_AdaptiveSoCs_Unified_2024.2_1113_1001_Lin64.bin`, free AMD account), choose
-Vivado → Vivado ML Standard → 7 Series devices only, install to `$HOME/Xilinx`, then
-install the USB cable drivers and unplug/replug the boards:
+Vivado → Vivado ML Standard → 7 Series devices only, install to `$HOME/Xilinx`, then:
 
 ```bash
 cd $HOME/Xilinx/Vivado/2024.2/data/xicom/cable_drivers/lin64/install_script/install_drivers
-sudo ./install_drivers
+sudo ./install_drivers                 # then unplug and replug the boards
+echo 'source $HOME/Xilinx/Vivado/2024.2/settings64.sh' >> ~/.bashrc && source ~/.bashrc
 ```
 
-**2. Packages and RISC-V GCC 15.1** (both routes, ~15 min on 20 cores, 2.4 GB):
+**2. Packages, Python venv and RISC-V GCC 15.1** (both routes, ~15 min on 20 cores, 2.4 GB):
 
 ```bash
+cd ~
 sudo apt install git make wget jq python3 python3-venv openocd dosfstools \
   autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev gawk \
   build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev
+sudo usermod -aG dialout,plugdev $USER  # board consoles; takes effect after logging in again
+python3 -m venv ~/edhoc-venv           # host tests; activate with: source ~/edhoc-venv/bin/activate
+~/edhoc-venv/bin/pip install pyfatfs==1.1.0 pycryptodome==3.24.0 cryptography==50.0.2 \
+  kyber-py==1.2.0 "setuptools<81"      # pyfatfs needs pkg_resources
 git clone https://github.com/riscv-collab/riscv-gnu-toolchain
 cd riscv-gnu-toolchain && git checkout 2025.06.07
 # the tag's github.com/bminor mirrors are gone: point at the current ones
@@ -50,49 +51,63 @@ git config submodule.gdb.url https://github.com/gnutools/binutils-gdb.git
 git config submodule.newlib.url https://github.com/cygwin/cygwin.git
 ./configure --prefix=$HOME/opt/riscv --with-multilib-generator="rv64imac-lp64--"
 make -j$(nproc)
-cd ..
+echo 'export PATH=$HOME/opt/riscv/bin:$PATH' >> ~/.bashrc && source ~/.bashrc
 ```
 
-**3. This repository** (into a path without spaces):
+**3. This repository** (both routes; any folder whose path has no spaces):
 
 ```bash
+cd ~
 git clone git@github.com:Khaiduy/chipyard-edhoc.git chipyard
-cd chipyard
+cd chipyard && echo "export REPO=$PWD" >> ~/.bashrc && source ~/.bashrc
 ```
 
-**Route A — build the hardware** (~7 min of sources, ~4 GB, then the bitstream):
+**4. Route A only — Chipyard sources and firtool** (~7 min, ~4 GB):
 
 ```bash
 sudo apt install openjdk-17-jdk-headless device-tree-compiler
+cd $REPO
 ./scripts/init-submodules-no-riscv-tools.sh   # Chipyard sources only; nothing is built
 ./patches/apply.sh                            # fork changes to fpga-shells and rocket-chip-blocks
 wget https://github.com/llvm/circt/releases/download/firtool-1.61.0/firrtl-bin-linux-x64.tar.gz
 tar xzf firrtl-bin-linux-x64.tar.gz -C $HOME/opt
+echo 'export RISCV=$HOME/opt/riscv PATH=$HOME/opt/firtool-1.61.0/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+```
 
-# every new shell (or add to ~/.bashrc):
-export RISCV=$HOME/opt/riscv
-export PATH=$HOME/opt/riscv/bin:$HOME/opt/firtool-1.61.0/bin:$PATH
-source $HOME/Xilinx/Vivado/2024.2/settings64.sh
+**5. Check** (new terminal): no `MISSING` line may appear (route B: `firtool` and `java`
+are not needed).
 
-cd fpga
+```bash
+for t in vivado riscv64-unknown-elf-gcc openocd firtool java; do
+  command -v $t >/dev/null || echo "MISSING: $t"; done
+$REPO/fpga/sw/export/common/board/list_boards.sh   # two Arty lines with a tty, two C232HM lines
+```
+
+`common/board/boards.env` ships with the author's serials: put your four in (Lesson 2,
+section 2).
+
+**Route A — build the bitstream:**
+
+```bash
+cd $REPO/fpga
 make SUB_PROJECT=arty100t CONFIG=EdhocRocket6475MHzArty100TConfig bitstream
 ```
 
 Accept the bitstream only if `report/timing.txt` shows WNS ≥ 0 and WHS ≥ 0
 (Lesson 1, section 5). If WNS is slightly negative, or Vivado 2024.2 crashes after
 routing (`Abnormal program termination (11)`, make error 139), run the closure recipe
-of Lesson 1, section 5, (4/5) from `obj/post_opt.dcp`. Program both boards with `fpga/sw/export/common/board/program_two.tcl`.
+of Lesson 1, section 5, (4/5) from `obj/post_opt.dcp`. Program both boards with
+`fpga/sw/export/common/board/program_two.tcl` (Lesson 1, section 6).
 
-**Route B — firmware only** (boards already hold the EDHOC bitstream of this revision):
-steps 1–3 are enough (Vivado Lab Edition should also do for programming; not tested).
+**Route B — firmware only** (boards already hold the EDHOC bitstream of this revision;
+steps 1–3 and 5 are enough; Vivado Lab Edition should also do for programming, not tested):
 
 ```bash
-cd fpga/sw/export
-./common/board/list_boards.sh     # boards.env ships with the author's serials: put your four in
-cd edhoc-wolfssl
+cd $REPO/fpga/sw/export/edhoc-wolfssl
 make edhoc_m3_initiator edhoc_m3_responder CRYPTO_SUITE=2
 ../common/board/run_pair.sh s2_m3 build/edhoc_m3_initiator.elf build/edhoc_m3_responder.elf
-#  -> s2_m3 PASS hs=2.74s stack_i=5360 stack_r=4736 prk=- 7s
+#  -> s2_m3 PASS hs=2.76s stack_i=5376 stack_r=4736 prk=- 7s
 ```
 
 ## Where things are
