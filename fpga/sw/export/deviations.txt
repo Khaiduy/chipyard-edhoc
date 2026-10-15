@@ -45,103 +45,16 @@ Không cần viết thêm code, chỉ cần thời gian test.
     Về cơ bản là cái edhoc này muốn xài PQC phải có PSK đúng không? Vậy với chế độ PSK có mode nào xài đến AES256, ML-KEM1024 không? 
 8. Lưu ý các phần em làm này nên song song làm thành work guide nhé. Như Shark Bình làm, để anh làm báo cáo => Chi phí. Làm chi tiêt step-by-step nha. Lưu ý với số lượng này phải hơn 200 trang đấy nhé 
 
-/*Date: 7/10/2026 - Kết quả*/
+/*Date: 15/10/2026 - Tổng kết từ 7/10/2026*/
 
-3(b) Bộ nhớ: OK. Image 24,297 - 46,643 B; tất cả (cả stack) vừa 64 KiB. Chỉ method 3 suite 0/1/4 vừa 32 KiB.
-4. FPGA (2 board, radio): methods 0-3 x 9 suites 36/36 PASS; AuthKEM TBD1/2/3 3/3 PASS. Tổng 39/39. OK.
-   Handshake: suite 0/1/4 0.8-1.1 s; 2/3/5 2.7-3.7 s; 6 0.8-3.0 s; 24 7.0-9.4 s; 25 2.2-3.3 s; TBD1 0.54 s; TBD2 0.57 s; TBD3 1.36 s.
-5A. Truyền file từ thẻ SD: chỉ có ở gói wolfssl; AuthKEM chỉ có stream (APP_FILE_BYTES).
-5B. Highest security: TBD3 = AES-256-GCM + ML-KEM-1024 + SHA-384, PASS trên FPGA, không cần PSK. OK.
-6. crypto_test, mlkem_test PASS. RFC 9529 test vectors PASS (host + FPGA). OK.
-7. GPIO, JTAG, UART PASS. SPI: thanh ghi PASS, thẻ SD FAIL (CMD0), cần kiểm tra thẻ / dây PMOD JA. TESTING.
-RFC 9528 / authkem-01: đã sửa 12 điểm chưa đúng chuẩn. Còn 1: RNG profile demo seed từ cycle counter (§9.2), cần quyết định.
-Lưu ý: firmware từ 7/10 không tương thích bản cũ, nạp cùng phiên bản cho 2 board.
-
-/*Date: 8/10/2026 - Kết quả*/
-
-5A. Truyền file thẻ SD -> thẻ SD qua kênh mã hoá sau EDHOC: OK. Thẻ SD có phân vùng FAT32 (copy file vào bằng PC, hoặc chuẩn bị qua JTAG). Board A gửi SEND.BIN, board B ghi RECV.BIN.
-   1 MiB, AuthKEM TBD3, trên FPGA: 142 s, 7.4 KB/s (SD chiếm ~4%), CRC khớp, đọc lại RECV.BIN: 0 byte sai. 100 MB ước tính ~4 giờ.
-7. SPI / thẻ SD: PASS cả 2 board (lỗi trước là do code, đã sửa).
-Radio: truyền dài bị lỗi do nhiễu SPI tới module radio; đã thêm CRC + tự khởi động lại radio. 1 MiB: 3/3 PASS.
-Kiểm tra lại: 78 build, 42 host test, 39/39 cặp board PASS.
-
-/*Date: 8/10/2026 (chiều) - Tốc độ truyền*/
-
-5A. 1 MiB thẻ SD -> thẻ SD (TBD3): 142 s -> 104 s, 7.4 -> 10.1 KB/s (+37%). 100 MB ước tính ~2.9 giờ. Đọc lại RECV.BIN: 0 byte sai.
-   Đã tăng tốc: AES nhanh 6x, GHASH nhanh 6x (bỏ phép nhân), SPI radio dạng burst, bỏ CSMA, gói đầy hơn.
-   Giới hạn còn lại là chip radio (250 kbit/s, ~6.8 ms mỗi gói). Turbo 625 kbit/s không ổn định trên module này. Muốn nhanh hơn nhiều cần nối dây giữa 2 board.
-Kiểm tra lại: 78 build, 42 host test, 39/39 cặp board PASS.
-
-/*Date: 12/10/2026 - Kết quả 5A(d)*/
-
-5A(d). Đo thời gian từng bước: OK. TIMING=1 in thời gian tạo / xử lý từng message (cả 2 board), mã hoá / giải mã luôn được in. 39/39 cặp PASS trên FPGA với TIMING=1.
-   Ví dụ (initiator, ms): suite 2 m3: m1 0.5, xử lý m2 1353, tạo m3 10. TBD3: m1 15, m2 83, m3 96, m4 127, m5 35 (tổng compute 391).
-   AES-256-GCM trên FPGA: mã hoá 162 KB/s, giải mã 153 KB/s. 1 MiB SD -> SD: 99 s (radio ~87 s, mã hoá 6.5 s, đọc SD 5.7 s).
-   Bảng đầy đủ: common/board/perf_table.py trên log của board.
-
-/*Date: 12/10/2026 - Kết quả mục 8 (tài liệu hướng dẫn)*/
-
-8. Slide hướng dẫn step-by-step: 5 bài, 187 slide (pptx + pdf), docs/slides/. Số liệu và output đều lấy từ board thật.
-   Còn thiếu: ảnh board (ô PHOTO), tên khoá học / tác giả / ngày, link GitHub. Chưa đủ 200 trang.
-
-/*Date: 12/10/2026 - Hiển thị kết quả trên terminal (tuỳ chọn)*/
-
-- run_pair.sh: thêm prk=match|DIFFER|- (so PRK_out hai board); VERBOSE=1 hiện console hai board trực tiếp (I| / R|); build DEBUG=1 để thấy giá trị trung gian.
-- Lỗi radio tìm thấy khi chạy DEBUG=1: hai board cùng gửi lại thì treo vĩnh viễn; board kết thúc trước làm board kia treo ở frame cuối. Đã sửa (edhoc_rf_link.c, transport_idle).
-- Kiểm tra lại: 78 build, 42 host test, 39/39 cặp board PASS, 1 MiB SD-SD 98.9 s (10.6 KB/s), CRC đúng.
-- Chạy lại 1 MiB 3 lần: ~99 s (10.5 KB/s), radio OK cả 3; lần 2 thẻ B lỗi ghi sector đầu (file không được lưu, báo FAIL đúng) -> điểm mở. Slide bài 3/4/5 đã cập nhật số liệu mới.
-- Slide: viết lại dạng hướng dẫn (bỏ số lần PASS, bảng trạng thái, điểm mở); bài 5 phần 6 = các câu hỏi của dự án + giới hạn cần biết + cách tự chạy lại. 187 slide.
-
-/*Date: 13/10/2026 - Slide: thêm chi tiết kỹ thuật*/
-- Bài 3: phần mới "Inside the Messages" (CBOR, message_1/2/3 từng byte theo RFC 9529, EDHOC_KDF/info, MAC_2 vs chữ ký, tự kiểm TH_2 từ log DEBUG=1). Bài 4: bên trong ML-KEM, key schedule AuthKEM từng message, so sánh RFC 9528, byte trên dây TBD3. Bài 5: khung radio từng byte, chia/ghép fragment, FAT32 cluster->sector, chuỗi cluster (file phân mảnh), 1 sector qua SPI, file->record->frame. 205 slide.
-
-/*Date: 13/10/2026 - Slide: lộ trình học hoàn chỉnh (theo góp ý review)*/
-- Bài 1: thêm phần "Start Here" (thiết bị, phần mềm + phiên bản đã thử, 2 lộ trình A/B, kiểm tra sẵn sàng, cách đọc slide, thuật ngữ), slide đi dây PMOD, quy trình chấp nhận bitstream; 75 MHz ghi là kết quả của bản build này, không phải giới hạn chung.
-- Bài 2: phần "Your Own Boards" (tìm 4 serial, sửa boards.env, kiểm tra), lab đầu tiên đủ bước, "Will my build fit?" (size + map), sửa câu linker (chỉ kiểm tra reserve cấu hình), SKIP ≠ PASS.
-- Bài 3: chạy 1 handshake trước rồi mới lý thuyết; bảng "mỗi kết quả chứng minh gì" (echo ≠ so sánh PRK_out); phạm vi RFC 9529 = 2 trace; cách đo thời gian; lệnh TH_2 chạy được từ log.
-- Bài 4: KEM cho gì / không cho gì, không cần PSK nhưng vẫn cần credential tin cậy + khoá riêng; ML-KEM tách 4 slide (+768); TBD3 = "strongest configured option"; quyết định draft gắn với hàm nguồn.
-- Bài 5: mỗi sự cố = triệu chứng/quan sát/nguyên nhân/sửa/kiểm tra/khôi phục; kiểm tra ở mọi bước + ví dụ lỗi ghi SD thật (A báo SENT, B "not stored"); commit FAT32 không an toàn khi mất điện; quy trình file lớn, đơn vị MiB/KB/s, 100 MiB là ước tính.
-- Mọi bài: ghi chú đáp án bài tập, nhãn "Run this / Example output / Simplified", số trang footer đúng. 236 slide.
-- Code: common/board/list_boards.sh (mới); run_one.sh tìm console theo serial trong boards.env; firmware in "RF: frames= repeats= crc_err= reinits=" khi kết thúc (radio). Kiểm tra: s2_m3 PASS, akTBD3 PASS prk=match, loopback PASS.
-- PRK_out của AuthKEM chỉ in ra với DEBUG=1 (trước đây in ở mọi bản build, kể cả production). Bản thường: prk=-; DEBUG=1: prk=match. Kiểm tra: akTBD3 PASS prk=- (không có PRK_out trên console), akTBD3 DEBUG=1 PASS prk=match.
-- Code đưa lên repo riêng (private) github.com/Khaiduy/chipyard-edhoc, tag edhoc-course-v1; slide và README gốc ghi địa chỉ này (xin quyền truy cập từ tác giả).
-- Rà soát code: 78 build, 42 host test, ASan+UBSan sạch (trừ kiểu shift có dấu của wolfCrypt, GCC định nghĩa). Đã sửa: (1) PROFILE=production + DEBUG=1 bị từ chối khi build; (2) SD: thử lại mỗi sector tối đa 3 lần và in lý do (SD: write <sector>: ...); (3) sha256/sha384_update với độ dài 0 không còn memcpy từ NULL; (5) wolfCrypt build với -fwrapv.
-- Lỗi ghi SD thỉnh thoảng: tìm ra nguyên nhân nhờ log mới — thẻ B trả data response trễ đúng 1 byte (đo: 2/4 lần chạy trễ 8 bit). Sửa: đọc 4 byte và tìm bit bắt đầu (như Linux mmc_spi). Sau sửa: 4/4 lần 1 MiB lưu đúng, không còn dòng SD:. Lưu ý: verify bằng đọc lại phải xoá RECV.BIN cũ trước, nếu không có thể kiểm tra nhầm file cũ.
-- UART1 qua 3 dây JB (GND, TX/RX chéo): s2_m3 PASS, nhưng tốc độ file chỉ 2.4 KB/s (bộ thu polling, bên gửi chờ sau mỗi byte) — chậm hơn radio (10.5 KB/s). Slide đã sửa câu "UART nhanh hơn".
-- UART1 nhanh hơn: 921600 baud (trước 57600) + điều khiển luồng (bên nhận gửi byte READY mỗi 0.2 ms khi chờ khung; bên gửi bỏ READY cũ, chờ READY mới rồi gửi cả khung), bỏ chờ sau mỗi byte và chờ 2 s ở app. Đo: TBD3 handshake 0.77 s (radio 1.24 s); 256 KiB 49.5 KB/s (trước 2.4 KB/s); 1 MiB thẻ SD A -> B 32.2 s = 32.6 KB/s (radio 99.6 s), đọc lại 0 byte sai. Radio vẫn PASS; 78 build, 42 host test PASS.
-- Slide: hình minh hoạ cách nối 2 board (ảnh board của Digilent, vẽ thêm module/dây/nhãn), hình board có nhãn JA–JD; slide mới "A wired link: UART1 at 921,600 baud". Tổng 238 slide.
-- Hình minh hoạ vẽ lại trên ảnh do người dùng cung cấp (Arty nhìn từ trên, PmodMicroSD, MRF24J40MA); thêm ảnh module vào các slide SD/radio/boot. Module thẻ nhớ là PmodMicroSD (không phải PmodSD): đã sửa tên trong slide và README.
-- Hình: cáp C232HM (ảnh FTDI) tách đôi — đầu dây cắm JD, đầu USB cắm PC; ảnh C232HM thay ô PHOTO cuối cùng ở slide JTAG. Không còn ô PHOTO trống.
-- Hình nối dây: không chồng lấn, không bị cắt (script tự kiểm tra hộp ảnh/chữ/dây); dây UART song song có nhãn TX→RX; anten MRF24J40MA hướng ra ngoài, có sóng radio.
-- Rà soát slide lần 2: sd_prep verify nay nhận độ dài mong đợi (-DSD_PREP_VERIFY=<bytes>; sai độ dài -> FAIL, đã thử trên board); tách cách kiểm tra file sinh sẵn / file riêng (sha256 trên PC); CRC truyền chỉ kiểm luồng nhận, đọc lại mới kiểm file đã lưu. Thêm dòng "STACK whole run" cuối mỗi lần chạy: 64 KiB và 1 MiB cho cùng đỉnh stack (18624/16352 B).
-- Số bộ nhớ đo lại cho bản này (cờ mặc định): lớn nhất suite 25 = 60,753 B, TBD3 = 61,471 B; 32 KiB: chỉ suite 4 method 3 initiator vừa (còn 229 B), responder thừa 69 B, suite 0/1 method 3 thừa 141–437 B (các dòng in chẩn đoán mới thêm ~100 B).
-- Sửa: lệnh "Run this" chạy được (load_both, sd_boot gpio_test.bin, thẻ đích), mã thoát make, tham chiếu mục, 100 MiB, giới hạn 4,294,967,294 B, UART1_BAUD qua EXTRA_CFLAGS, câu xác thực AuthKEM; sơ đồ key schedule từng message; slide riêng cho lỗi SD thứ 3. 241 slide.
-
-/*Date: 13/10/2026 - Boot ROM gửi lại CMD0; slide dạng hướng dẫn*/
-- Boot ROM (sdboot/sd.c) gửi CMD0 tối đa 10 lần đến khi R1 = 0x01 (thẻ vừa cắm điện có thể trả byte rác 0x3f). Vùng bootrom_mem trong linker sửa 0x800 -> 0x2000 (đúng kích thước ROM trong Configs.scala); sdboot.bin 2064 B.
-- Bitstream mới: build lỗi do Vivado phys_opt crash (exit 139); đóng timing từ post_route.dcp: WNS +0.002 ns, WHS +0.037 ns, 0 endpoint lỗi (24148). LUT 14,767 (23.3 %). ROM đọc qua JTAG khớp sdboot.bin.
-- Kiểm tra trên board A: rút/cắm thẻ + RESET 3 lần, RESET 2 lần: 5/5 boot "GPIO TEST: PASS", không ERROR. jtag_test, gpio_test PASS trên cả 2 board.
-- sd_prep -DSD_PREP_BOOT: ghi build/boot.bin vào LBA 2048 từ board (không cần đầu đọc thẻ); thử: 1606 B, boot OK.
-- Slide: bỏ kiểu báo cáo (không giải thích 75 vs 100 MHz, không phân tích 32 KiB, không "known issue"); 100 MHz thành bài tập; bảng chân module radio -> JC (PCB riêng). 239 slide.
-
-/*Date: 13/10/2026 - Rà soát slide cuối*/
-- Sửa đường dẫn checkpoint / báo cáo timing, thêm lệnh nạp sd_prep cho SD boot không dùng đầu đọc; bỏ chi tiết PCB trong danh sách thiết bị.
-- Làm rõ số byte section khác vùng RAM có padding; bổ sung lý do 64 KiB và kiểm tra cả hai vai trò.
-- 239 slide: số trang và nội dung chữ PPTX/PDF khớp; 26 khối lệnh shell qua bash -n; kiểm tra hình các slide đã sửa. Không chạy lại FPGA trong lần rà soát này.
-- Repo chỉ còn 1 nhánh main (bản mới nhất), bỏ tag edhoc-course-v1; README và slide bỏ lệnh git checkout tag.
-- Sửa theo lần thử copy-paste của người review: bỏ ./scripts/init-fpga.sh (không có trong Chipyard 1.11); build-setup.sh dùng --skip-marshal --skip-firesim (FireMarshal lỗi khi thiếu guestmount; thiết kế này không cần), ~30 phút, ~20 GB; lệnh venv cho pip (Ubuntu 24.04 chặn pip install trực tiếp) + "setuptools<81" (pyfatfs cần pkg_resources: đã thử, fat32-host-test PASS trong venv Python 3.12); thư mục build AuthKEM: TBD2 (mặc định) -> build/, TBD1/TBD3 -> build-tbd1/ build-tbd3/; boards.env đi kèm serial của tác giả, phải thay; clone vào đường dẫn không có dấu cách; tham chiếu "Lesson 1, section 6" đúng.
-- Người review build lại Route A từ bản clone mới: bitstream 30m52s, timing đúng như slide (WNS 0.002, WHS 0.037, 0 endpoint lỗi), test ngoại vi/crypto + s2_m3 + akTBD3 PASS. Slide 1 ghi chú dòng "make: ... Error 1 (ignored)" là bình thường (bước cp của Chipyard không có file trong luồng FPGA).
-
-/*Date: 13/10/2026 - Cài đặt không dùng conda, thử trên máy sạch*/
-- Hướng dẫn cài đặt không dùng conda/build-setup.sh (không cài Verilator, FireSim, FireMarshal): gói apt (có jq, openjdk-17, dtc), riscv-gnu-toolchain tag 2025.06.07 build từ mã nguồn (GCC 15.1, cũng dùng build boot ROM qua RISCV=), scripts/init-submodules-no-riscv-tools.sh, firtool 1.61.0 tải về. Slide bài 1 có thêm: cài Vivado 2024.2, công cụ cho cả 2 route, route A.
-- Thử trong container Ubuntu 24.04 sạch (chỉ mount Vivado): toolchain 15 phút, submodule 7 phút, repo 3.6 GB + toolchain 2.4 GB. Phát hiện: (1) tag 2025.06.07 trỏ newlib/binutils/gdb về github.com/bminor (đã mất) -> thêm 3 lệnh git config (gnutools/cygwin); (2) thiếu jq (conda có sẵn); (3) Vivado 2024.2 crash sau route (exit 139) -> công thức đóng timing tách 2 lần chạy: post_route WNS -0.740 -> sau phys_opt +0.006 ns, WHS +0.026, 0 endpoint lỗi.
-- Bitstream đó (boot ROM GCC 15.1, 2240 B): nạp 2 board, boot từ thẻ SD PASS, jtag/gpio/spi/uart PASS cả 2 board, s2_m3 PASS hs=2.764s, akTBD3 PASS hs=1.233s. Firmware và unit test AuthKEM build/PASS trong container.
-
-/*Date: 14/10/2026 - Kiểm thử README / slide từ clone mới*/
-- Clone GitHub 0037f36 thành công. Route A FAIL ngay bước 1: conda-lock: command not found; env.sh chưa được tạo.
-- Làm theo lệnh cài toolchain trong slide (prefix /tmp): GCC 16.1.0, build OK. Host: 36 loopback cổ điển, 6 unit/loopback AuthKEM, RFC 9529 PASS. 78 image TIMING=1 và các ví dụ periph/crypto/SD/debug/UART build OK.
-- Reference model FAIL (thiếu Crypto), FAT32 host FAIL (thiếu pyfatfs); tái hiện lỗi cd khi dán tuần tự. Chưa chạy FPGA: đường cài hardware từ đầu bị chặn. Chi tiết: docs/replication-audit-2026-10-14.md.
-
-/*Date: 14/10/2026 - Sửa theo báo cáo thử tái lập (bản 0037f36)*/
-- Báo cáo thử trên bản cũ 0037f36 (conda-lock, env.sh, GCC 16.1 đã sửa trong e60b913). Còn lại và đã sửa: mọi khối "Run this" (slide + README) bắt đầu bằng cd $REPO/...; REPO, PATH, RISCV, firtool, Vivado lưu vào ~/.bashrc (terminal mới vẫn chạy); thứ tự cài: Vivado -> gói apt + venv + GCC -> clone (máy mới chưa có git) -> route A; venv ghim phiên bản (pyfatfs 1.1.0, pycryptodome 3.24.0, cryptography 50.0.2, kyber-py 1.2.0, setuptools<81), khối Python của bài 4/5 kích hoạt venv; kiểm tra sẵn sàng in "MISSING: <tool>"; lệnh usermod cho dialout/plugdev. Bài 1 "Start Here" 12 slide.
-- Kiểm tra: dán lần lượt 7 khối bash của README (trừ cài Vivado, install_drivers, build bitstream, run_pair) trong container Ubuntu 24.04 sạch, bash tương tác: cả 7 khối rc=0, không có MISSING; khối PC bài 4: unit tests PASS, REFERENCE MODEL PASS; khối FAT32 bài 5: FAT32 HOST TEST PASS.
+3(b) Bộ nhớ 64 KiB: OK. Mọi bản build vừa 64 KiB kể cả stack; lớn nhất suite 25 = 60,753 B, TBD3 = 61,471 B. 32 KiB: chỉ method 3 suite 0/1/4 gần vừa, không làm tiếp.
+3(c) 75 MHz: OK, timing đạt (WNS +0.002 đến +0.006 ns, 0 endpoint lỗi). Biên rất nhỏ; Vivado 2024.2 có thể crash sau route, đã có công thức đóng timing (slide bài 1).
+4. FPGA, 2 board, radio: methods 0-3 x 9 suite 36/36 PASS, AuthKEM TBD1/2/3 3/3 PASS. Handshake: suite 0/1/4 0.8-1.1 s, 2/3/5 2.7-3.7 s, 24 7.0-9.4 s, 25 2.2-3.3 s, TBD3 1.23 s.
+5A. Truyền file thẻ SD -> thẻ SD qua kênh mã hoá sau EDHOC: OK. 1 MiB TBD3: radio 99 s (10.5 KB/s), UART 3 dây 32 s (32.6 KB/s); đọc lại 0 byte sai. 100 MB qua radio ước tính ~2.8 giờ.
+5A(d). Thời gian từng bước (TIMING=1): OK. Ví dụ TBD3 tổng compute 391 ms; AES-256-GCM 162 KB/s mã hoá, 153 KB/s giải mã.
+5B. Highest security: TBD3 = AES-256-GCM + ML-KEM-1024 + SHA-384 (AuthKEM), PASS trên FPGA, không cần PSK. OK.
+6. crypto_test, mlkem_test, RFC 9529 test vector (host + FPGA): PASS. OK.
+7. GPIO, JTAG, UART, SPI / thẻ SD: PASS cả 2 board. Boot từ thẻ SD: OK. OK.
+8. Slide hướng dẫn: 5 bài, 243 slide (pptx + pdf), README cài đặt không dùng conda. Thử trên Ubuntu 24.04 sạch theo README/slide: toolchain, host test, firmware, sinh RTL OK; bitstream build trên máy sạch, nạp 2 board, test + handshake PASS. Chưa kiểm: trình cài Vivado, thao tác thẻ/board của người mới.
+Code: github.com/Khaiduy/chipyard-edhoc (private, nhánh main). 78 build, 42 host test PASS, ASan/UBSan sạch.
+Còn mở: RNG demo lấy seed từ cycle counter (RFC 9528 §9.2) cần nguồn entropy thật; suite TBD theo draft, có thể thay đổi; ghi FAT32 không an toàn khi mất điện.
