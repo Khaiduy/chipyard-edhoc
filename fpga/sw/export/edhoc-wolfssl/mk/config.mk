@@ -174,7 +174,7 @@ CFLAGS += -DEDHOC_CRYPTO_SUITE=$(CRYPTO_SUITE) $(WOLFCRYPT_CFLAGS)
 CFLAGS += -DEDHOC_SHA256_CSPRNG
 
 # EXTRA_CFLAGS lets the caller add defines without clobbering the flags above
-# (a plain CFLAGS= on the command line would drop -DWOLFCRYPT and the includes).
+# (a plain CFLAGS= on the command line would drop the defines and includes).
 #   make EXTRA_CFLAGS=-DHEAP_ARENA_SIZE=8192
 #   make EXTRA_CFLAGS=-DAPP_SD_XFER
 CFLAGS += $(TRANSPORT_CFLAGS)

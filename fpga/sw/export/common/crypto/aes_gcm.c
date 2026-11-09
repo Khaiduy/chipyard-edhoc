@@ -1,7 +1,7 @@
 /*
  * aes_gcm.c - see aes_gcm.h.
  *
- * The AES block cipher is common/aes.c (TinyCrypt-derived, table S-box).
+ * The AES block cipher is aes.c (TinyCrypt-derived, table S-box).
  *
  * GHASH multiplies bit by bit with masks (SP 800-38D Algorithm 1): no tables
  * and no data-dependent branches.

@@ -20,13 +20,8 @@ _prog_start:
   la t1, _ebss
 _clear_bss:
   bge t0, t1, _bss_done
-#if __riscv_xlen == 64
-  sd zero, 0(t0)      // RV64: store doubleword
+  sd zero, 0(t0)
   addi t0, t0, 8
-#else
-  sw zero, 0(t0)      // RV32: use sw (store word) instead of sd
-  addi t0, t0, 4      // RV32: increment by 4 bytes instead of 8
-#endif
   j _clear_bss
 _bss_done:
 

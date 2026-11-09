@@ -5,8 +5,8 @@
 #       ML-KEM-512 static keys on both sides and CCS (kid) credentials.
 #
 # The protocol library is compiled straight into each image rather than built
-# as a static library first: EDHOC_KEM_ONLY/EDHOC_NO_CERT_CRED already trim it
-# to the KEM-only subset, so there is nothing to select at link time.
+# as a static library first: it is already only the KEM-only subset, so there
+# is nothing to select at link time.
 
 # ML-KEM-512 is linked in here too: with the library compiled directly there
 # is no static archive to carry it.

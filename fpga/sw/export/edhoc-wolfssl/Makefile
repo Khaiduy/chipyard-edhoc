@@ -1,4 +1,4 @@
-# EDHOC RV32 firmware — Methods 0-3, all suites, wolfCrypt backend.
+# EDHOC RV64 firmware — Methods 0-3, all suites, wolfCrypt backend.
 # See README.md for usage.  Load order matters:
 #   config  -> toolchain, flags, suite table, wolfCrypt source sets
 #   rules   -> core compile/link rules (default goal 'all'), ../common/mk

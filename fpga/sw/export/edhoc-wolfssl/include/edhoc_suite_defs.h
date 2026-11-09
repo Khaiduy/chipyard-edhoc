@@ -2,21 +2,21 @@
  * edhoc_suite_defs.h - Compile-time suite classification macros
  *
  * Derives all suite-dependent constants from EDHOC_CRYPTO_SUITE (set by Makefile).
- * All suites use wolfCrypt as the crypto library.
+ * Asymmetric crypto is wolfCrypt, curve25519-donna or Monocypher, per suite.
  * Include this in app files instead of duplicating suite conditionals.
  *
  * Suite → Curve + Sig mapping (RFC 9528 §3.6):
- *   Suites 0,1,4,6,7: X25519 + EdDSA/Ed25519  (wolfCrypt)
+ *   Suites 0,1,4:     X25519 + EdDSA/Ed25519  (curve25519-donna, Monocypher)
+ *   Suite 6:          X25519 + ES256          (curve25519-donna, wolfCrypt)
  *   Suites 2,3,5:     P-256  + ES256            (wolfCrypt)
  *   Suite 24:         P-384  + ES384            (wolfCrypt, CNSA 1.0)
  *   Suite 25:         X448   + Ed448            (wolfCrypt)
  *
  * Suite → AEAD mapping:
- *   Suites 0,1,2,3: AES-128-CCM (wolfCrypt)
- *   Suites 4,5,25:  ChaCha20/Poly1305 (wolfCrypt)
- *   Suite 6:        AES-128-GCM (wolfCrypt)
- *   Suite 7:        Ascon-AEAD-128 (wolfCrypt)
- *   Suite 24:       AES-256-GCM (wolfCrypt)
+ *   Suites 0,1,2,3: AES-128-CCM (common/crypto)
+ *   Suites 4,5,25:  ChaCha20/Poly1305 (Monocypher)
+ *   Suite 6:        AES-128-GCM (common/crypto)
+ *   Suite 24:       AES-256-GCM (common/crypto)
  */
 #ifndef EDHOC_SUITE_DEFS_H
 #define EDHOC_SUITE_DEFS_H

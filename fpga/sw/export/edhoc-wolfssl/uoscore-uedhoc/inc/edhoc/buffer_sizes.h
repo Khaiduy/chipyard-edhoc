@@ -106,19 +106,6 @@
 #define HASH_SIZE        32
 #define AEAD_IV_SIZE     12
 #define SIG_OR_MAC_SIZE  64
-#elif defined(EDHOC_CRYPTO_SUITE) && EDHOC_CRYPTO_SUITE == 7
-/* Suite 7 (extension): Ascon-AEAD-128 + Ascon-Hash256 + X25519 + Ed25519. Ascon IV=16. */
-#define PK_SIZE          32
-#define G_Y_SIZE         32
-#define G_X_SIZE         32
-#define G_R_SIZE         32
-#define G_I_SIZE         32
-#define SIGNATURE_SIZE   64
-#define ECDH_SECRET_SIZE 32
-#define PRK_SIZE         32
-#define HASH_SIZE        32
-#define AEAD_IV_SIZE     16
-#define SIG_OR_MAC_SIZE  64
 #else
 /* Suites 0-3 (default): AES-CCM (IV=13) */
 #define PK_SIZE          32

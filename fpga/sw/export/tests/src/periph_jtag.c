@@ -65,18 +65,11 @@ int main(void)
 		fails++;
 	}
 
-	/* Compile-time width must agree with what the hardware reports. */
-#if __riscv_xlen == 64
+	/* The firmware is built for RV64: the hardware must report it. */
 	if (xlen != 2) {
 		kprintf("  built RV64 but core reports RV32: FAIL\r\n");
 		fails++;
 	}
-#else
-	if (xlen != 1) {
-		kprintf("  built RV32 but core reports RV64: FAIL\r\n");
-		fails++;
-	}
-#endif
 
 	kprintf("JTAG TEST: %s (%d failures)\r\n", fails ? "FAIL" : "PASS", fails);
 	while (1)

@@ -8,7 +8,7 @@
  * Nothing here is compiled per suite: the AEAD algorithm, key length, IV
  * length, tag length and hash are all read at run time from get_suite() and
  * the get_aead_*_len() helpers. The identical source therefore works for every
- * wolfCrypt suite (0-7, 24, 25) and for the ML-KEM build (suite 8).
+ * suite: 0-6, 24, 25 (edhoc-wolfssl) and TBD1-TBD3 (edhoc-authkem).
  */
 #ifndef EDHOC_APP_DATA_H
 #define EDHOC_APP_DATA_H
@@ -23,7 +23,7 @@
 /* Upper bounds over all supported suites (checked at run time in
  * app_data_init(), so adding a larger algorithm fails loudly, not silently). */
 #define APP_KEY_MAX  32 /* ChaCha20/Poly1305, AES-256-GCM        */
-#define APP_IV_MAX   16 /* Ascon-AEAD-128                        */
+#define APP_IV_MAX   16 /* upper bound; AES-CCM uses 13          */
 #define APP_TAG_MAX  16 /* everything except AES-CCM-16-64-128   */
 #define APP_HASH_MAX 64 /* SHAKE256 (suite 25)                   */
 

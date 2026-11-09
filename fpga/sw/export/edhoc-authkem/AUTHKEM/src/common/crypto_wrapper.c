@@ -86,12 +86,12 @@ extern int default_CSPRNG(uint8_t *dest, unsigned int size);
  * ===================================================================== */
 
 
-/* KEM backend: mlkem-native. It is correct on this target -- a standalone
- * on-board keygen/encap/decap round-trip matches with 51 kB of stack headroom
- * -- and it is far leaner than PQClean's reference code, which needs ~11.5 kB
- * of stack for decapsulation (it materialises the whole matrix) against the
- * ~9.4 kB available here. An earlier DIFFER result with this backend was
- * .bss corruption from a stack overflow, not a fault in the library. */
+/* KEM backend: mlkem-native (FIPS 203), portable C as a single compilation
+ * unit. MLK_CONFIG_LOW_RAM (see mk/config.mk) keeps ML-KEM-1024 decapsulation
+ * at 18.8 kB of stack. If a decapsulation result is wrong on the board, first
+ * check the STACK line of the run: a stack overflow corrupts .bss. The library
+ * itself passes its FIPS 203 known-answer tests on this target (see tests/,
+ * mlkem_test). */
 
 enum err WEAK ephemeral_kem_key_gen(enum ecdh_alg alg,
 				    struct byte_array *sk,

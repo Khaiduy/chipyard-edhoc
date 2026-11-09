@@ -1,9 +1,9 @@
 /*
- * aes_ccm.c - see inc/common/aes_ccm.h.
+ * aes_ccm.c - see aes_ccm.h.
  *
  * CBC-MAC over B0 || encoded AAD || payload, and CTR encryption with
  * counter blocks A_i (SP 800-38C Appendix A; RFC 3610 Section 2), on the
- * AES block cipher in common/aes.c. The nonce is 13 bytes, so the length
+ * AES block cipher in aes.c. The nonce is 13 bytes, so the length
  * field is L = 2 bytes.
  */
 #include <string.h>

@@ -147,7 +147,7 @@ enum err app_data_send(struct app_chan *ch, const uint8_t *pt, uint32_t pt_len,
 	aad.ptr = hdr;
 	aad.len = sizeof(hdr);
 	/* out.len is the plaintext length; the buffer also holds the tag,
-	 * which is what the TinyCrypt CCM backend writes in place. */
+	 * which the AEAD backend writes in place. */
 	out.ptr = rec_buf;
 	out.len = pt_len;
 	tag.ptr = tag_buf;

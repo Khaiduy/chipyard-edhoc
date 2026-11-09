@@ -37,25 +37,6 @@ enum info_label {
 	IV_5 = 12,
 };
 
-/* Legacy, unused IKR labels retained for source compatibility. The active
- * five-message AuthKEM state machine uses enum info_label above. */
-enum ikr_info_label {
-	IKR_K_1         = 0,
-	IKR_IV_1        = 1,
-	IKR_SALT_2m     = 2,
-	IKR_MAC_2       = 3,
-	IKR_SALT_2e3e3m = 4,
-	IKR_K_2         = 5,
-	IKR_IV_2        = 6,
-	IKR_MAC_3       = 7,
-	IKR_K_3         = 8,
-	IKR_IV_3        = 9,
-	IKR_PRK_out     = 10,
-	IKR_K_4         = 11,
-	IKR_IV_4        = 12,
-	IKR_PRK_exporter= 13,
-};
-
 /**
  * @brief   			Encodes the HKDF Info. 
  * 

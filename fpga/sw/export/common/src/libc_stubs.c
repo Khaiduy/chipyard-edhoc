@@ -140,19 +140,13 @@ void __stack_chk_fail(void) {
 void *__stack_chk_guard = (void *)0xdeadbeef;
 
 // ============================================
-// Memory allocation stubs (not actually implemented)
+// Memory allocation
 // ============================================
 
-/* LIFO bump allocator over a static arena. Historically PQClean fips202's
- * incremental SHAKE API malloc'd ~200-byte contexts; ML-KEM here is now
- * malloc-free (kyber_shake256_rkprf rewritten one-shot), so the arena is dead
- * at runtime on the KEM/EDHOC paths. Size is overridable: pass
- * -DHEAP_ARENA_SIZE=<n> to shrink it for malloc-free builds. */
-/* 1 kB is enough because the crypto paths are malloc-free: ML-KEM is one-shot
- * (see above) and wolfCrypt runs with WOLFSSL_SP_NO_MALLOC, which keeps SP's
- * temporaries on the stack. Raise it with -DHEAP_ARENA_SIZE=<n> if a future
- * backend allocates. The old 16 kB default is what pushed the P-256/P-384
- * suites past the 64 kB scratchpad. */
+/* LIFO bump allocator over a static arena. 1 kB is enough because the crypto
+ * paths are malloc-free: mlkem-native allocates nothing and wolfCrypt runs
+ * with WOLFSSL_SP_NO_MALLOC, which keeps SP's temporaries on the stack. Set
+ * the size with -DHEAP_ARENA_SIZE=<n>. */
 #ifndef HEAP_ARENA_SIZE
 #define HEAP_ARENA_SIZE 1024
 #endif

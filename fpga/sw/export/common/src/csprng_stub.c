@@ -43,7 +43,7 @@
 
 /* CLINT mtime low 32 bits (Arty A7 SoC: CLINT base = 0x02000000).
  * mtime offset = 0xBFF8. Returns 0 if CLINT is not present. */
-static inline uint32_t rv32_clint_mtime(void)
+static inline uint32_t clint_mtime_low(void)
 {
     return *(volatile uint32_t *)0x0200BFF8UL;
 }
@@ -118,7 +118,7 @@ static void csprng_seed(void)
     volatile uint32_t work = 0;
 
     raw[0] = read_cycles();
-    raw[4] = (uint64_t)rv32_clint_mtime();
+    raw[4] = (uint64_t)clint_mtime_low();
 
     /* Delay 1 */
     for (volatile int i = 0; i < 500; i++) work ^= (uint32_t)(i * 0x9e3779b9u);
@@ -129,7 +129,7 @@ static void csprng_seed(void)
     for (volatile int i = 0; i < 32; i++) scratch[i] = (uint8_t)(work >> i);
     for (volatile int i = 31; i >= 0; i--) work ^= scratch[i];
     raw[2] = read_cycles();
-    raw[5] = (uint64_t)rv32_clint_mtime() | ((uint64_t)work << 32);
+    raw[5] = (uint64_t)clint_mtime_low() | ((uint64_t)work << 32);
 
     /* Delay 3 — length depends on raw[1] to prevent compile-time folding */
     for (volatile uint32_t i = 0; i < (raw[1] & 0xFFF) + 200; i++) work += i;

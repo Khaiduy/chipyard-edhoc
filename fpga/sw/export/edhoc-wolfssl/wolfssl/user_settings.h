@@ -9,7 +9,7 @@
  *   2,3 : AES-CCM + SHA-256 + P-256 + ES256
  *   4   : ChaCha20/Poly1305 + SHA-256 + X25519 + Ed25519
  *   5   : ChaCha20/Poly1305 + SHA-256 + P-256 + ES256
- *   6   : AES-128-GCM + SHA-256 + X25519 + Ed25519
+ *   6   : AES-128-GCM + SHA-256 + X25519 + ES256
  *   24  : AES-256-GCM + SHA-384 + P-384 + ES384
  *   25  : ChaCha20/Poly1305 + SHAKE-256 + X448 + Ed448
  */
@@ -50,7 +50,6 @@
  * cycles), while turning it off grows the P-256/P-384 images enough to
  * overflow the 64 kB scratchpad. Size for free. */
 #define WOLFSSL_SP_SMALL        /* smaller code / fewer unrolled loops */
-#define WOLFSSL_SP_NO_PINNED_REGS
 
 /* ── AEAD, SHA-256/384, HMAC, HKDF: not wolfCrypt's ─────────────────
  * AES-CCM/GCM, SHA-256/384, HMAC and HKDF come from common/crypto (shared with
@@ -96,7 +95,6 @@
 #  define WOLFSSL_HAVE_SP_ECC   /* enables sp_c64.c P-256 path; without this,
                                  * ecc.c falls back to heap-alloc generic path
                                  * which fails on bare-metal (malloc returns NULL) */
-#  define WOLFSSL_SP_NO_384     /* P-256 builds: exclude P-384 SP code */
 #  define ECC_TIMING_RESISTANT
 #  define HAVE_COMP_KEY         /* wc_ecc_import_x963_ex (0x02/0x03 prefix)
                                  * returns NOT_COMPILED_IN without this */
@@ -179,12 +177,9 @@ int csprng_generate_block(unsigned char *output, unsigned int sz);
 #define NO_AES_CBC
 #define NO_CERTS
 #define NO_ASN
-#define NO_ASN_CRYPT
 #define NO_PSK
 #define NO_ERROR_STRINGS
-#define NO_WOLFSSL_STUB
 #define WOLFSSL_NO_SOCK
-#define NO_MULTIBYTE_PRINT
 #define WC_NO_RNG_SIMPLE
 #define NO_OLD_RNGNAME
 #define NO_PWDBASED

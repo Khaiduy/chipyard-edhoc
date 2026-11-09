@@ -25,12 +25,4 @@ extern void kputs(const char *);
 extern void kprintf(const char *, ...);
 extern void vkprintf(const char *, va_list);
 
-#ifdef DEBUG
-#define dprintf(s, ...)	kprintf((s), ##__VA_ARGS__)
-#define dputs(s)	kputs((s))
-#else
-#define dprintf(s, ...) do { } while (0)
-#define dputs(s)	do { } while (0)
-#endif
-
 #endif /* _SDBOOT_KPRINTF_H */

@@ -1,7 +1,7 @@
 /*
- * aes.c - see inc/common/aes.h.
+ * aes.c - see aes.h.
  *
- * TinyCrypt's aes_encrypt.c (externals/tinycrypt, BSD-3-Clause, Intel
+ * TinyCrypt's aes_encrypt.c (github.com/intel/tinycrypt, BSD-3-Clause, Intel
  * Corporation) generalised to the AES-128 and AES-256 key schedules
  * (FIPS 197 Section 5.2). Like the original it uses a table S-box, so it is
  * not hardened against cache-timing attacks.

@@ -134,10 +134,4 @@ enum err hkdf_expand_parts(enum hash_alg alg, const struct byte_array *prk,
 			   const struct hash_part *parts, uint32_t n,
 			   struct byte_array *out);
 
-#ifdef LIBOQS
-
-
-#endif
-
-
 #endif
