@@ -1,6 +1,6 @@
-/* user_settings.h — wolfCrypt bare-metal config for RV32IMAC EDHOC
+/* user_settings.h — wolfCrypt bare-metal config for RV64IMAC EDHOC
  *
- * All suites 0–7, 24, 25 share this file.  Features are conditionally enabled
+ * All suites 0–6, 24, 25 share this file.  Features are conditionally enabled
  * by EDHOC_CRYPTO_SUITE (injected via Makefile -D flag) so that only the
  * cryptographic primitives actually needed for a given suite are compiled.
  *
@@ -10,7 +10,6 @@
  *   4   : ChaCha20/Poly1305 + SHA-256 + X25519 + Ed25519
  *   5   : ChaCha20/Poly1305 + SHA-256 + P-256 + ES256
  *   6   : AES-128-GCM + SHA-256 + X25519 + Ed25519
- *   7   : Ascon-AEAD-128 + Ascon-Hash256 + X25519 + Ed25519
  *   24  : AES-256-GCM + SHA-384 + P-384 + ES384
  *   25  : ChaCha20/Poly1305 + SHAKE-256 + X448 + Ed448
  */
@@ -22,7 +21,6 @@
 #define SINGLE_THREADED
 #define NO_FILESYSTEM
 #define NO_WOLFSSL_MEMORY       /* no wolfSSL memory wrappers; use raw libc */
-#define WOLFSSL_EXPERIMENTAL_SETTINGS  /* required for Ascon */
 
 /* ── Math backend: SP (single-precision) C-only ────────────────────── */
 /* WOLFSSL_SP_MATH, not _ALL. _ALL keeps wolfCrypt's generic multi-precision
@@ -43,8 +41,7 @@
 /* RV64: 64-bit SP words (sp_c64.c). Products are unsigned __int128, which GCC
  * lowers to mul/mulhu inline; WOLFSSL_SP_DIV_WORD_HALF keeps division to
  * 64-bit divides, so no libgcc __udivti3 is linked (libgcc here is built
- * -mcmodel=medlow and cannot reach the 0x80000000 RAM base). Measured on the
- * board: suite 2 handshake compute 2.71 s -> 1.82 s against sp_c32.c. */
+ * -mcmodel=medlow and cannot reach the 0x80000000 RAM base). */
 #define SP_WORD_SIZE 64
 #define HAVE___UINT128_T
 #define WOLFSSL_SP_DIV_WORD_HALF
@@ -96,7 +93,7 @@
 #if EDHOC_CRYPTO_SUITE == 2 || EDHOC_CRYPTO_SUITE == 3 || \
     EDHOC_CRYPTO_SUITE == 5 || EDHOC_CRYPTO_SUITE == 6
 #  define HAVE_ECC
-#  define WOLFSSL_HAVE_SP_ECC   /* enables sp_c32.c P-256 path; without this,
+#  define WOLFSSL_HAVE_SP_ECC   /* enables sp_c64.c P-256 path; without this,
                                  * ecc.c falls back to heap-alloc generic path
                                  * which fails on bare-metal (malloc returns NULL) */
 #  define WOLFSSL_SP_NO_384     /* P-256 builds: exclude P-384 SP code */
@@ -114,8 +111,8 @@
 #if EDHOC_CRYPTO_SUITE == 24
 #  define HAVE_ECC
 #  define HAVE_ECC_DHE
-#  define WOLFSSL_HAVE_SP_ECC   /* enables sp_c32.c P-384 path */
-#  define WOLFSSL_SP_384        /* gates the P-384 block in sp_c32.c */
+#  define WOLFSSL_HAVE_SP_ECC   /* enables sp_c64.c P-384 path */
+#  define WOLFSSL_SP_384        /* gates the P-384 block in sp_c64.c */
 #  define WOLFSSL_SP_NO_256     /* P-384 builds: exclude P-256 SP code */
 #  define HAVE_ECC384           /* needed alongside WOLFSSL_SP_384 */
 #  define ECC_TIMING_RESISTANT
@@ -129,7 +126,7 @@
  * pattern: only drop a path when its opposite is explicitly active.
  * Verify-only role (PEER_SK, !AUTH_SK) → drop SIGN.
  * Sign-only role  (AUTH_SK, !PEER_SK) → drop VERIFY.
- * Method 3 (neither flag): keep both (sp_c32.c needs order arithmetic that
+ * Method 3 (neither flag): keep both (sp_c64.c needs order arithmetic that
  * is only compiled in when SIGN or VERIFY is enabled). */
 #if (EDHOC_CRYPTO_SUITE == 2 || EDHOC_CRYPTO_SUITE == 3 || \
      EDHOC_CRYPTO_SUITE == 5 || EDHOC_CRYPTO_SUITE == 6 || \
